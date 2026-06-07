@@ -92,7 +92,7 @@ camera.position.set(2.5, 1.2, 6.0);
 
 // ── ENVIRONMENT (metallic reflections) ───────────
 const pmrem = new THREE.PMREMGenerator(renderer);
-scene.environment = pmrem.fromScene(new THREE.RoomEnvironment(), 0.04).texture;
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
 // ── LIGHTS ────────────────────────────────────────
 scene.add(new THREE.AmbientLight(0xffffff, 0.5));
