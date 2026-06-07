@@ -25,7 +25,7 @@
       position: relative;
       cursor: grab;
     }
-    #scene:active { cursor: grabbing; }
+    #scene.dial-active { cursor: default; }
     #grid {
       position: absolute; inset: 0;
       background-image:
@@ -34,53 +34,82 @@
       background-size: 50px 50px;
       pointer-events: none;
     }
-    #wrap {
-      transform-style: preserve-3d;
-      will-change: transform;
-    }
+    #wrap { transform-style: preserve-3d; will-change: transform; }
+
     header {
       position: absolute; top: 0; left: 0; right: 0;
-      padding: 18px 24px;
+      padding: 16px 22px;
       display: flex; justify-content: space-between; align-items: flex-start;
       z-index: 30; pointer-events: none;
     }
     header > * { pointer-events: auto; }
-    h1 { font-size: 1.4rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 10px; }
-    h1 span.eye { font-size: 1.6rem; }
-    .subtitle { font-size: 0.75rem; color: #64748b; margin-top: 4px; }
-    #reset-btn {
+    h1 { font-size: 1.35rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 10px; }
+    .subtitle { font-size: 0.72rem; color: #64748b; margin-top: 4px; }
+    .hdr-btns { display: flex; gap: 8px; }
+    .hdr-btn {
       background: #1e293b; border: 1px solid #334155; color: #e2e8f0;
-      padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.8rem;
+      padding: 7px 14px; border-radius: 8px; cursor: pointer; font-size: 0.78rem;
       transition: background 0.15s;
     }
-    #reset-btn:hover { background: #334155; }
-    footer {
-      border-top: 1px solid #1e293b;
-      background: rgba(15,23,42,0.8);
-      padding: 10px; text-align: center;
-      font-size: 0.75rem; color: #64748b; z-index: 20;
+    .hdr-btn:hover { background: #334155; }
+
+    /* Prescription readout panel */
+    #rx-panel {
+      position: absolute; bottom: 52px; left: 20px;
+      background: rgba(15,23,42,0.92); border: 1px solid #1e293b;
+      border-radius: 12px; padding: 12px 16px; z-index: 25;
+      backdrop-filter: blur(8px); min-width: 210px;
+      pointer-events: none;
     }
+    #rx-panel h4 { font-size: 0.65rem; font-weight: 700; color: #475569;
+      text-transform: uppercase; letter-spacing: .1em; margin-bottom: 10px; text-align: center; }
+    .rx-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; gap: 6px; }
+    .rx-eye { font-size: 0.65rem; font-weight: 700; color: #64748b; width: 24px; text-align: left; }
+    .rx-cell { background: #0f172a; border: 1px solid #1e3a5f; border-radius: 6px;
+      padding: 3px 6px; font-family: 'Courier New', monospace; font-size: 0.75rem;
+      font-weight: 700; text-align: center; min-width: 52px; }
+    .rx-sph { color: #60a5fa; }
+    .rx-cyl { color: #f472b6; }
+    .rx-ax  { color: #34d399; }
+    .rx-label { font-size: 0.6rem; color: #334155; text-align: center; }
+    .rx-labels { display: flex; justify-content: space-between; gap: 6px; margin-bottom: 4px; padding-right: 28px; }
+    .rx-lbl { font-size: 0.6rem; color: #334155; min-width: 52px; text-align: center; }
+
     /* Tooltip */
     #tip {
       position: fixed; z-index: 100;
-      width: 300px;
+      width: 290px;
       background: rgba(15,23,42,0.97);
       border: 1px solid #334155;
       border-left: 4px solid #06b6d4;
       border-radius: 12px;
-      padding: 14px 16px;
+      padding: 13px 15px;
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.15s;
       backdrop-filter: blur(8px);
       box-shadow: 0 20px 60px rgba(0,0,0,0.6);
     }
-    #tip h3 { font-size: 0.85rem; font-weight: 700; color: #67e8f9; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #1e293b; line-height: 1.3; }
-    #tip p { font-size: 0.78rem; color: #94a3b8; line-height: 1.6; direction: rtl; }
-    /* SVG hotspot cursor */
+    #tip h3 { font-size: 0.82rem; font-weight: 700; color: #67e8f9;
+      margin-bottom: 7px; padding-bottom: 7px; border-bottom: 1px solid #1e293b; line-height: 1.3; }
+    #tip p { font-size: 0.75rem; color: #94a3b8; line-height: 1.6; direction: rtl; }
+    #tip .rotate-hint { font-size: 0.68rem; color: #22d3ee; margin-top: 6px;
+      padding-top: 6px; border-top: 1px solid #1e293b; }
+
     .hs { cursor: help; }
     .hs .hr { opacity: 0; transition: opacity 0.2s; }
     .hs:hover .hr { opacity: 1; }
+
+    /* Rotatable dials */
+    .rdial { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%2306b6d4' d='M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8zm1-13H9v2h3V5zm0 4H9v2h3V9zm2.5 2.5a2.5 2.5 0 1 0-5 0 2.5 2.5 0 0 0 5 0z'/%3E%3C/svg%3E") 12 12, crosshair; }
+    .rdial:hover .rdial-ring { opacity: 0.7 !important; }
+
+    footer {
+      border-top: 1px solid #1e293b;
+      background: rgba(15,23,42,0.8);
+      padding: 9px; text-align: center;
+      font-size: 0.72rem; color: #64748b; z-index: 20;
+    }
   </style>
 </head>
 <body>
@@ -88,659 +117,736 @@
 <div id="tip">
   <h3 id="tip-title"></h3>
   <p id="tip-desc"></p>
+  <p class="rotate-hint" id="tip-rotate" style="display:none">↺ גרור כדי לסובב את החוגה</p>
 </div>
 
 <header>
   <div>
-    <h1><span class="eye">👁</span> פורופטר VT-5C — סימולטור אינטראקטיבי</h1>
-    <p class="subtitle">גרור כדי לסובב תלת-ממדית • רחף מעל כל רכיב לתיאורו</p>
+    <h1>👁 פורופטר VT-5C — סימולטור אינטראקטיבי</h1>
+    <p class="subtitle">גרור רקע לסיבוב מבנה • גרור חוגה/עדשה לסיבובה • רחף לפרטים</p>
   </div>
-  <button id="reset-btn">↺ אפס זווית צפייה</button>
+  <div class="hdr-btns">
+    <button class="hdr-btn" id="reset-rx-btn">↺ אפס מרשם</button>
+    <button class="hdr-btn" id="reset-btn">⟲ אפס זווית</button>
+  </div>
 </header>
+
+<!-- Prescription readout -->
+<div id="rx-panel">
+  <h4>📋 מרשם נוכחי</h4>
+  <div class="rx-labels">
+    <span class="rx-lbl">SPH</span>
+    <span class="rx-lbl">CYL</span>
+    <span class="rx-lbl">Axis</span>
+  </div>
+  <div class="rx-row">
+    <span class="rx-eye">OD</span>
+    <span class="rx-cell rx-sph" id="rx-sph-R">+0.00</span>
+    <span class="rx-cell rx-cyl" id="rx-cyl-R">−0.00</span>
+    <span class="rx-cell rx-ax"  id="rx-ax-R">000°</span>
+  </div>
+  <div class="rx-row">
+    <span class="rx-eye">OS</span>
+    <span class="rx-cell rx-sph" id="rx-sph-L">+0.00</span>
+    <span class="rx-cell rx-cyl" id="rx-cyl-L">−0.00</span>
+    <span class="rx-cell rx-ax"  id="rx-ax-L">000°</span>
+  </div>
+</div>
 
 <div id="scene">
   <div id="grid"></div>
   <div id="wrap">
-    <svg width="740" height="590" viewBox="0 0 740 590" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <!-- Silver gradients -->
-        <linearGradient id="sg1" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stop-color="#f2f2f2"/>
-          <stop offset="25%" stop-color="#d8d8d8"/>
-          <stop offset="65%" stop-color="#a0a0a0"/>
-          <stop offset="100%" stop-color="#686868"/>
-        </linearGradient>
-        <linearGradient id="sg2" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stop-color="#b8b8b8"/>
-          <stop offset="35%" stop-color="#ebebeb"/>
-          <stop offset="65%" stop-color="#b0b0b0"/>
-          <stop offset="100%" stop-color="#787878"/>
-        </linearGradient>
-        <radialGradient id="knob" cx="32%" cy="28%" r="68%">
-          <stop offset="0%" stop-color="#f8f8f8"/>
-          <stop offset="35%" stop-color="#d0d0d0"/>
-          <stop offset="75%" stop-color="#909090"/>
-          <stop offset="100%" stop-color="#505050"/>
-        </radialGradient>
-        <radialGradient id="knobSm" cx="32%" cy="28%" r="68%">
-          <stop offset="0%" stop-color="#ffffff"/>
-          <stop offset="45%" stop-color="#cccccc"/>
-          <stop offset="100%" stop-color="#686868"/>
-        </radialGradient>
-        <radialGradient id="housing" cx="28%" cy="22%" r="78%">
-          <stop offset="0%" stop-color="#c8c8c8"/>
-          <stop offset="45%" stop-color="#989898"/>
-          <stop offset="100%" stop-color="#484848"/>
-        </radialGradient>
-        <radialGradient id="outerRing" cx="30%" cy="25%" r="70%">
-          <stop offset="0%" stop-color="#efefef"/>
-          <stop offset="40%" stop-color="#d4d4d4"/>
-          <stop offset="80%" stop-color="#a8a8a8"/>
-          <stop offset="100%" stop-color="#707070"/>
-        </radialGradient>
-        <radialGradient id="aperture" cx="35%" cy="30%" r="65%">
-          <stop offset="0%" stop-color="#0a1828"/>
-          <stop offset="55%" stop-color="#060e18"/>
-          <stop offset="100%" stop-color="#010308"/>
-        </radialGradient>
-        <radialGradient id="lensRef" cx="38%" cy="32%" r="60%">
-          <stop offset="0%" stop-color="#1e40af" stop-opacity="0.5"/>
-          <stop offset="60%" stop-color="#1e3a8a" stop-opacity="0.2"/>
-          <stop offset="100%" stop-color="#000" stop-opacity="0.0"/>
-        </radialGradient>
-        <filter id="ds" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="2" dy="4" stdDeviation="7" flood-color="#000" flood-opacity="0.55"/>
-        </filter>
-        <filter id="ds2" x="-30%" y="-30%" width="160%" height="160%">
-          <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000" flood-opacity="0.7"/>
-        </filter>
-        <radialGradient id="bridgeGrad" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stop-color="#d8d8d8"/>
-          <stop offset="100%" stop-color="#888888"/>
-        </radialGradient>
-      </defs>
 
-      <!-- ═══════════════════════════════════════════
-           TOP MOUNTING ASSEMBLY
-      ═══════════════════════════════════════════ -->
+<svg id="phoropter-svg" width="740" height="590" viewBox="0 0 740 590" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <linearGradient id="sg1" x1="0%" y1="0%" x2="0%" y2="100%">
+    <stop offset="0%" stop-color="#f2f2f2"/><stop offset="25%" stop-color="#d8d8d8"/>
+    <stop offset="65%" stop-color="#a0a0a0"/><stop offset="100%" stop-color="#686868"/>
+  </linearGradient>
+  <linearGradient id="sg2" x1="0%" y1="0%" x2="100%" y2="0%">
+    <stop offset="0%" stop-color="#b8b8b8"/><stop offset="35%" stop-color="#ebebeb"/>
+    <stop offset="65%" stop-color="#b0b0b0"/><stop offset="100%" stop-color="#787878"/>
+  </linearGradient>
+  <radialGradient id="knob" cx="32%" cy="28%" r="68%">
+    <stop offset="0%" stop-color="#f8f8f8"/><stop offset="35%" stop-color="#d0d0d0"/>
+    <stop offset="75%" stop-color="#909090"/><stop offset="100%" stop-color="#505050"/>
+  </radialGradient>
+  <radialGradient id="knobSm" cx="32%" cy="28%" r="68%">
+    <stop offset="0%" stop-color="#ffffff"/><stop offset="45%" stop-color="#cccccc"/>
+    <stop offset="100%" stop-color="#686868"/>
+  </radialGradient>
+  <radialGradient id="housing" cx="28%" cy="22%" r="78%">
+    <stop offset="0%" stop-color="#c8c8c8"/><stop offset="45%" stop-color="#989898"/>
+    <stop offset="100%" stop-color="#484848"/>
+  </radialGradient>
+  <radialGradient id="outerRing" cx="30%" cy="25%" r="70%">
+    <stop offset="0%" stop-color="#efefef"/><stop offset="40%" stop-color="#d4d4d4"/>
+    <stop offset="80%" stop-color="#a8a8a8"/><stop offset="100%" stop-color="#707070"/>
+  </radialGradient>
+  <radialGradient id="aperture" cx="35%" cy="30%" r="65%">
+    <stop offset="0%" stop-color="#0a1828"/><stop offset="55%" stop-color="#060e18"/>
+    <stop offset="100%" stop-color="#010308"/>
+  </radialGradient>
+  <radialGradient id="lensRef" cx="38%" cy="32%" r="60%">
+    <stop offset="0%" stop-color="#1e40af" stop-opacity="0.5"/>
+    <stop offset="100%" stop-color="#000" stop-opacity="0.0"/>
+  </radialGradient>
+  <filter id="ds" x="-20%" y="-20%" width="140%" height="140%">
+    <feDropShadow dx="2" dy="4" stdDeviation="7" flood-color="#000" flood-opacity="0.55"/>
+  </filter>
+  <filter id="ds2" x="-30%" y="-30%" width="160%" height="160%">
+    <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000" flood-opacity="0.7"/>
+  </filter>
+</defs>
 
-      <!-- Vertical rod -->
-      <rect x="348" y="15" width="44" height="95" rx="6" fill="url(#sg2)" stroke="#909090" stroke-width="1.2"/>
-      <!-- Rod highlight -->
-      <rect x="354" y="15" width="8" height="95" rx="3" fill="rgba(255,255,255,0.18)"/>
+<!-- ══════════ MOUNTING TOP ══════════ -->
+<rect x="348" y="18" width="44" height="92" rx="6" fill="url(#sg2)" stroke="#909090" stroke-width="1.2"/>
+<rect x="354" y="18" width="8" height="92" rx="3" fill="rgba(255,255,255,0.18)"/>
 
-      <!-- Top horizontal bracket -->
-      <g class="hs" data-part="rotatingKnob">
-        <rect x="295" y="12" width="150" height="40" rx="10" fill="url(#sg1)" stroke="#aaa" stroke-width="1.5" filter="url(#ds2)"/>
-        <rect x="299" y="16" width="60" height="8" rx="3" fill="rgba(255,255,255,0.2)"/>
-        <!-- Two top screws/knobs -->
-        <circle cx="320" cy="14" r="13" fill="url(#knob)" stroke="#bbb" stroke-width="1.2" filter="url(#ds2)"/>
-        <circle cx="320" cy="14" r="7" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.7"/>
-        <circle cx="320" cy="14" r="3" fill="#888"/>
-        <circle cx="420" cy="14" r="13" fill="url(#knob)" stroke="#bbb" stroke-width="1.2" filter="url(#ds2)"/>
-        <circle cx="420" cy="14" r="7" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.7"/>
-        <circle cx="420" cy="14" r="3" fill="#888"/>
-        <!-- hover -->
-        <rect x="293" y="10" width="154" height="44" rx="11" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-      </g>
+<g class="hs" data-part="rotatingKnob">
+  <rect x="295" y="14" width="150" height="40" rx="10" fill="url(#sg1)" stroke="#aaa" stroke-width="1.5" filter="url(#ds2)"/>
+  <circle cx="321" cy="15" r="13" fill="url(#knob)" stroke="#bbb" stroke-width="1.2" filter="url(#ds2)"/>
+  <circle cx="321" cy="15" r="7" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.7"/>
+  <circle cx="321" cy="15" r="3" fill="#888"/>
+  <circle cx="419" cy="15" r="13" fill="url(#knob)" stroke="#bbb" stroke-width="1.2" filter="url(#ds2)"/>
+  <circle cx="419" cy="15" r="7" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.7"/>
+  <circle cx="419" cy="15" r="3" fill="#888"/>
+  <rect x="293" y="12" width="154" height="44" rx="11" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
+</g>
 
-      <!-- Fixing knob (right) -->
-      <g class="hs" data-part="fixingKnob">
-        <rect x="452" y="48" width="55" height="24" rx="6" fill="url(#sg1)" stroke="#aaa" stroke-width="1"/>
-        <circle cx="490" cy="43" r="16" fill="url(#knob)" stroke="#bbb" stroke-width="1.5" filter="url(#ds2)"/>
-        <circle cx="490" cy="43" r="9" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.8"/>
-        <circle cx="490" cy="43" r="4" fill="#888"/>
-        <rect x="450" y="46" width="59" height="28" rx="7" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-      </g>
+<g class="hs" data-part="fixingKnob">
+  <rect x="452" y="50" width="55" height="22" rx="6" fill="url(#sg1)" stroke="#aaa" stroke-width="1"/>
+  <circle cx="490" cy="45" r="16" fill="url(#knob)" stroke="#bbb" stroke-width="1.5" filter="url(#ds2)"/>
+  <circle cx="490" cy="45" r="9" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.8"/>
+  <circle cx="490" cy="45" r="4" fill="#888"/>
+  <rect x="450" y="43" width="59" height="30" rx="7" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
+</g>
 
-      <!-- Fixed insertion port -->
-      <g class="hs" data-part="fixedPort">
-        <rect x="333" y="68" width="74" height="22" rx="5" fill="#282828" stroke="#555" stroke-width="1.2"/>
-        <rect x="337" y="71" width="66" height="16" rx="3" fill="#1a1a1a" stroke="#444" stroke-width="0.7"/>
-        <line x1="348" y1="68" x2="348" y2="90" stroke="#444" stroke-width="0.6"/>
-        <line x1="392" y1="68" x2="392" y2="90" stroke="#444" stroke-width="0.6"/>
-        <rect x="331" y="66" width="78" height="26" rx="6" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-      </g>
+<g class="hs" data-part="fixedPort">
+  <rect x="333" y="70" width="74" height="22" rx="5" fill="#282828" stroke="#555" stroke-width="1.2"/>
+  <rect x="337" y="73" width="66" height="16" rx="3" fill="#1a1a1a" stroke="#444" stroke-width="0.7"/>
+  <rect x="331" y="68" width="78" height="26" rx="6" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
+</g>
 
-      <!-- ═══════════════════════════════════════════
-           HORIZONTAL BRIDGE BAR
-      ═══════════════════════════════════════════ -->
+<!-- ══════════ BRIDGE BAR ══════════ -->
+<rect x="110" y="128" width="520" height="52" rx="12" fill="url(#sg1)" stroke="#999" stroke-width="1.5" filter="url(#ds)"/>
+<rect x="114" y="132" width="512" height="10" rx="5" fill="rgba(255,255,255,0.15)"/>
 
-      <rect x="110" y="128" width="520" height="52" rx="12" fill="url(#sg1)" stroke="#999" stroke-width="1.5" filter="url(#ds)"/>
-      <!-- Bridge highlight -->
-      <rect x="114" y="132" width="512" height="10" rx="5" fill="rgba(255,255,255,0.15)"/>
+<g class="hs" data-part="lockingScrew">
+  <rect x="103" y="133" width="32" height="42" rx="7" fill="url(#sg2)" stroke="#aaa" stroke-width="1.2"/>
+  <circle cx="119" cy="154" r="12" fill="url(#knob)" stroke="#bbb" stroke-width="1.2"/>
+  <circle cx="119" cy="154" r="6" fill="url(#knobSm)"/>
+  <rect x="101" y="131" width="36" height="46" rx="8" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
+</g>
 
-      <!-- Locking screw near point rod (left) -->
-      <g class="hs" data-part="lockingScrew">
-        <rect x="103" y="133" width="32" height="42" rx="7" fill="url(#sg2)" stroke="#aaa" stroke-width="1.2"/>
-        <circle cx="119" cy="154" r="12" fill="url(#knob)" stroke="#bbb" stroke-width="1.2"/>
-        <circle cx="119" cy="154" r="6" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.6"/>
-        <circle cx="119" cy="154" r="2.5" fill="#888"/>
-        <rect x="101" y="131" width="36" height="46" rx="8" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-      </g>
+<g class="hs" data-part="horizontalKnob">
+  <circle cx="158" cy="154" r="20" fill="url(#knob)" stroke="#bbb" stroke-width="1.5" filter="url(#ds2)"/>
+  <circle cx="158" cy="154" r="12" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.8"/>
+  <line x1="145" y1="154" x2="171" y2="154" stroke="#888" stroke-width="1.2"/>
+  <line x1="158" y1="141" x2="158" y2="167" stroke="#888" stroke-width="1.2"/>
+  <circle cx="158" cy="154" r="5" fill="#848484"/>
+  <circle cx="158" cy="154" r="22" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
+</g>
 
-      <!-- Horizontal adjusting knob (left) -->
-      <g class="hs" data-part="horizontalKnob">
-        <circle cx="158" cy="154" r="20" fill="url(#knob)" stroke="#bbb" stroke-width="1.5" filter="url(#ds2)"/>
-        <circle cx="158" cy="154" r="12" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.8"/>
-        <!-- Notch lines -->
-        <line x1="145" y1="154" x2="171" y2="154" stroke="#888" stroke-width="1.2"/>
-        <line x1="158" y1="141" x2="158" y2="167" stroke="#888" stroke-width="1.2"/>
-        <line x1="148" y1="144" x2="168" y2="164" stroke="#888" stroke-width="0.8"/>
-        <line x1="168" y1="144" x2="148" y2="164" stroke="#888" stroke-width="0.8"/>
-        <circle cx="158" cy="154" r="5" fill="#848484"/>
-        <circle cx="158" cy="154" r="22" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-      </g>
+<g class="hs" data-part="pdWindow">
+  <rect x="215" y="136" width="48" height="26" rx="4" fill="white" stroke="#909090" stroke-width="1.5"/>
+  <rect x="217" y="138" width="44" height="22" rx="3" fill="#f5faff"/>
+  <text x="239" y="153" font-family="'Courier New',monospace" font-size="11" font-weight="bold" fill="#111" text-anchor="middle">64</text>
+  <rect x="213" y="134" width="52" height="30" rx="5" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
+</g>
 
-      <!-- PD Display Window (Left) -->
-      <g class="hs" data-part="pdWindow">
-        <rect x="215" y="136" width="48" height="26" rx="4" fill="white" stroke="#909090" stroke-width="1.5"/>
-        <rect x="217" y="138" width="44" height="22" rx="3" fill="#f5faff"/>
-        <text x="239" y="153" font-family="'Courier New', monospace" font-size="11" font-weight="bold" fill="#111" text-anchor="middle">64</text>
-        <rect x="213" y="134" width="52" height="30" rx="5" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-      </g>
+<g class="hs" data-part="pdKnob">
+  <circle cx="282" cy="128" r="20" fill="url(#knob)" stroke="#bbb" stroke-width="1.5" filter="url(#ds2)"/>
+  <circle cx="282" cy="128" r="12" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.8"/>
+  <circle cx="282" cy="128" r="5" fill="#888"/>
+  <circle cx="282" cy="128" r="22" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
+</g>
 
-      <!-- PD Knob Left -->
-      <g class="hs" data-part="pdKnob">
-        <circle cx="282" cy="128" r="20" fill="url(#knob)" stroke="#bbb" stroke-width="1.5" filter="url(#ds2)"/>
-        <circle cx="282" cy="128" r="12" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.8"/>
-        <circle cx="282" cy="128" r="5" fill="#888"/>
-        <!-- Knurling dots -->
-        <circle cx="282" cy="109" r="2" fill="#aaa"/>
-        <circle cx="299" cy="116" r="2" fill="#aaa"/>
-        <circle cx="301" cy="135" r="2" fill="#aaa"/>
-        <circle cx="263" cy="116" r="2" fill="#aaa"/>
-        <circle cx="261" cy="135" r="2" fill="#aaa"/>
-        <circle cx="282" cy="128" r="22" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-      </g>
+<g class="hs" data-part="pdKnob">
+  <circle cx="458" cy="128" r="20" fill="url(#knob)" stroke="#bbb" stroke-width="1.5" filter="url(#ds2)"/>
+  <circle cx="458" cy="128" r="12" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.8"/>
+  <circle cx="458" cy="128" r="5" fill="#888"/>
+  <circle cx="458" cy="128" r="22" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
+</g>
 
-      <!-- PD Knob Right -->
-      <g class="hs" data-part="pdKnob">
-        <circle cx="458" cy="128" r="20" fill="url(#knob)" stroke="#bbb" stroke-width="1.5" filter="url(#ds2)"/>
-        <circle cx="458" cy="128" r="12" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.8"/>
-        <circle cx="458" cy="128" r="5" fill="#888"/>
-        <circle cx="458" cy="109" r="2" fill="#aaa"/>
-        <circle cx="475" cy="116" r="2" fill="#aaa"/>
-        <circle cx="477" cy="135" r="2" fill="#aaa"/>
-        <circle cx="439" cy="116" r="2" fill="#aaa"/>
-        <circle cx="437" cy="135" r="2" fill="#aaa"/>
-        <circle cx="458" cy="128" r="22" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-      </g>
+<g class="hs" data-part="horizontalBubble">
+  <rect x="455" y="137" width="56" height="24" rx="4" fill="#0f2a0f" stroke="#2d5a2d" stroke-width="1.5"/>
+  <rect x="460" y="143" width="46" height="12" rx="6" fill="#1a4a1a" stroke="#287028" stroke-width="0.7"/>
+  <ellipse cx="483" cy="149" rx="10" ry="5" fill="#5af05a" opacity="0.75"/>
+  <ellipse cx="481" cy="147" rx="5" ry="2.5" fill="#9aff9a" opacity="0.5"/>
+  <line x1="480" y1="140" x2="480" y2="162" stroke="#1a5a1a" stroke-width="0.8"/>
+  <line x1="486" y1="140" x2="486" y2="162" stroke="#1a5a1a" stroke-width="0.8"/>
+  <rect x="453" y="135" width="60" height="28" rx="5" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
+</g>
 
-      <!-- Horizontal Bubble -->
-      <g class="hs" data-part="horizontalBubble">
-        <rect x="455" y="137" width="56" height="24" rx="4" fill="#0f2a0f" stroke="#2d5a2d" stroke-width="1.5"/>
-        <rect x="458" y="140" width="50" height="18" rx="3" fill="#081a08"/>
-        <rect x="460" y="143" width="46" height="12" rx="6" fill="#1a4a1a" stroke="#287028" stroke-width="0.7"/>
-        <!-- Bubble fluid shimmer -->
-        <ellipse cx="483" cy="149" rx="10" ry="5" fill="#5af05a" opacity="0.75"/>
-        <ellipse cx="481" cy="147" rx="5" ry="2.5" fill="#9aff9a" opacity="0.5"/>
-        <!-- Center reference lines -->
-        <line x1="480" y1="140" x2="480" y2="161" stroke="#1a5a1a" stroke-width="0.8"/>
-        <line x1="486" y1="140" x2="486" y2="161" stroke="#1a5a1a" stroke-width="0.8"/>
-        <rect x="453" y="135" width="60" height="28" rx="5" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-      </g>
+<g class="hs" data-part="horizontalKnob">
+  <circle cx="578" cy="154" r="20" fill="url(#knob)" stroke="#bbb" stroke-width="1.5" filter="url(#ds2)"/>
+  <circle cx="578" cy="154" r="12" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.8"/>
+  <line x1="565" y1="154" x2="591" y2="154" stroke="#888" stroke-width="1.2"/>
+  <line x1="578" y1="141" x2="578" y2="167" stroke="#888" stroke-width="1.2"/>
+  <circle cx="578" cy="154" r="5" fill="#848484"/>
+  <circle cx="578" cy="154" r="22" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
+</g>
 
-      <!-- Horizontal knob right -->
-      <g class="hs" data-part="horizontalKnob">
-        <circle cx="578" cy="154" r="20" fill="url(#knob)" stroke="#bbb" stroke-width="1.5" filter="url(#ds2)"/>
-        <circle cx="578" cy="154" r="12" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.8"/>
-        <line x1="565" y1="154" x2="591" y2="154" stroke="#888" stroke-width="1.2"/>
-        <line x1="578" y1="141" x2="578" y2="167" stroke="#888" stroke-width="1.2"/>
-        <circle cx="578" cy="154" r="5" fill="#848484"/>
-        <circle cx="578" cy="154" r="22" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-      </g>
+<g class="hs" data-part="auxLensKnob">
+  <circle cx="618" cy="154" r="17" fill="url(#knob)" stroke="#bbb" stroke-width="1.5" filter="url(#ds2)"/>
+  <circle cx="618" cy="154" r="9" fill="url(#knobSm)"/>
+  <text x="618" y="140" font-family="monospace" font-size="7" fill="#ccc" text-anchor="middle">A</text>
+  <text x="632" y="157" font-family="monospace" font-size="7" fill="#ccc" text-anchor="middle">B</text>
+  <text x="618" y="170" font-family="monospace" font-size="7" fill="#ccc" text-anchor="middle">C</text>
+  <circle cx="618" cy="154" r="19" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
+</g>
 
-      <!-- Aux lens knob bridge-right -->
-      <g class="hs" data-part="auxLensKnob">
-        <circle cx="618" cy="154" r="17" fill="url(#knob)" stroke="#bbb" stroke-width="1.5" filter="url(#ds2)"/>
-        <circle cx="618" cy="154" r="9" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.8"/>
-        <text x="618" y="140" font-family="monospace" font-size="7" fill="#ccc" text-anchor="middle">A</text>
-        <text x="632" y="157" font-family="monospace" font-size="7" fill="#ccc" text-anchor="middle">B</text>
-        <text x="618" y="170" font-family="monospace" font-size="7" fill="#ccc" text-anchor="middle">C</text>
-        <circle cx="618" cy="154" r="19" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-      </g>
+<!-- Struts -->
+<path d="M 185 178 C 185 210 185 225 185 248" stroke="url(#sg2)" stroke-width="22" stroke-linecap="round" fill="none"/>
+<path d="M 555 178 C 555 210 555 225 555 248" stroke="url(#sg2)" stroke-width="22" stroke-linecap="round" fill="none"/>
 
-      <!-- ═══════════════════════════════════════════
-           LEFT → CONNECTION STRUTS
-      ═══════════════════════════════════════════ -->
-      <path d="M 185 178 C 185 210 185 225 185 245" stroke="url(#sg2)" stroke-width="22" stroke-linecap="round" fill="none"/>
-      <path d="M 555 178 C 555 210 555 225 555 245" stroke="url(#sg2)" stroke-width="22" stroke-linecap="round" fill="none"/>
+<!-- ══════════════════════════════════════════════
+     LEFT EYE (OS)
+══════════════════════════════════════════════ -->
 
-      <!-- ═══════════════════════════════════════════
-           LEFT EYE HOUSING
-      ═══════════════════════════════════════════ -->
-      <g id="left-eye" filter="url(#ds)">
+<!-- Drop shadow -->
+<circle cx="195" cy="357" r="135" fill="#303030" filter="url(#ds)"/>
 
-        <!-- Spherical Disk (outermost big silver ring) -->
-        <g class="hs" data-part="sphericalDisk">
-          <!-- Shadow ring -->
-          <circle cx="195" cy="355" r="133" fill="#484848" stroke="#333" stroke-width="1"/>
-          <!-- Outer silver ring body -->
-          <circle cx="195" cy="355" r="130" fill="url(#outerRing)" stroke="#c0c0c0" stroke-width="1.5"/>
-          <!-- Inner dark boundary of ring -->
-          <circle cx="195" cy="355" r="110" fill="#585858" stroke="#484848" stroke-width="1.5"/>
-          <!-- Tick marks on ring (JS will add) -->
-          <circle id="L-sph-ticks" cx="195" cy="355" r="120"/>
-          <!-- Scale numbers (simplified ring) -->
-          <text x="195" y="235" font-family="monospace" font-size="10" fill="#1a1a1a" text-anchor="middle" font-weight="bold">0</text>
-          <text x="306" y="270" font-family="monospace" font-size="9" fill="#1a1a1a" text-anchor="middle">+3</text>
-          <text x="328" y="355" font-family="monospace" font-size="9" fill="#1a1a1a" text-anchor="middle">+6</text>
-          <text x="306" y="445" font-family="monospace" font-size="9" fill="#1a1a1a" text-anchor="middle">+9</text>
-          <text x="84" y="270" font-family="monospace" font-size="9" fill="#1a1a1a" text-anchor="middle">−3</text>
-          <text x="62" y="355" font-family="monospace" font-size="9" fill="#1a1a1a" text-anchor="middle">−6</text>
-          <text x="84" y="445" font-family="monospace" font-size="9" fill="#1a1a1a" text-anchor="middle">−9</text>
-          <!-- Hover -->
-          <circle cx="195" cy="355" r="132" fill="none" stroke="#06b6d4" stroke-width="3" class="hr"/>
-        </g>
+<!-- ── ROTATABLE: SPH ring LEFT ── -->
+<!-- (Housing drawn on top at r=108 masks the inner part → only band 108-130 visible) -->
+<g id="sph-ring-L" class="rdial hs" data-part="sphericalDisk" data-rotdial="sph-ring-L">
+  <!-- Outer border ring -->
+  <circle cx="195" cy="355" r="133" fill="#484848" stroke="#383838" stroke-width="1"/>
+  <!-- Silver ring surface -->
+  <circle cx="195" cy="355" r="130" fill="url(#outerRing)" stroke="#c8c8c8" stroke-width="1.5"/>
+  <!-- Ticks and numbers generated by JS below -->
+  <g id="sph-ticks-L"></g>
+  <!-- Glow ring on hover -->
+  <circle cx="195" cy="355" r="131" fill="none" stroke="#06b6d4" stroke-width="3" opacity="0" class="rdial-ring"/>
+</g>
 
-        <!-- Main housing body -->
-        <circle cx="195" cy="355" r="108" fill="url(#housing)" stroke="#909090" stroke-width="1.5"/>
-        <!-- Housing highlight arc -->
-        <path d="M 120 295 A 90 90 0 0 1 270 295" stroke="rgba(255,255,255,0.15)" stroke-width="8" fill="none" stroke-linecap="round"/>
+<!-- Housing body (masks inner part of SPH ring) -->
+<circle cx="195" cy="355" r="108" fill="url(#housing)" stroke="#909090" stroke-width="1.5"/>
+<path d="M 122 297 A 88 88 0 0 1 268 297" stroke="rgba(255,255,255,0.14)" stroke-width="8" fill="none" stroke-linecap="round"/>
 
-        <!-- Cylinder Axis Dial ring (silver ring around aperture) -->
-        <g class="hs" data-part="cylAxisDial">
-          <!-- Outer edge of axis ring -->
-          <circle cx="195" cy="355" r="88" fill="#cccccc" stroke="#aaa" stroke-width="1.5"/>
-          <!-- Inner edge of axis ring -->
-          <circle cx="195" cy="355" r="76" fill="#6e6e6e" stroke="#585858" stroke-width="1.2"/>
-          <!-- Tick marks -->
-          <circle cx="195" cy="355" r="82" fill="none" stroke="#444" stroke-width="0.8" stroke-dasharray="1.8 4"/>
-          <!-- Degree markers -->
-          <text x="195" y="272" font-family="monospace" font-size="8" fill="#e0e0e0" text-anchor="middle">180</text>
-          <text x="280" y="358" font-family="monospace" font-size="8" fill="#e0e0e0" text-anchor="middle">90</text>
-          <text x="195" y="444" font-family="monospace" font-size="8" fill="#e0e0e0" text-anchor="middle">0</text>
-          <text x="110" y="358" font-family="monospace" font-size="8" fill="#e0e0e0" text-anchor="middle">270</text>
-          <!-- Indicator line -->
-          <line x1="195" y1="268" x2="195" y2="278" stroke="#ff6060" stroke-width="2.5" stroke-linecap="round"/>
-          <!-- Hover -->
-          <circle cx="195" cy="355" r="89" fill="none" stroke="#06b6d4" stroke-width="3" class="hr"/>
-        </g>
+<!-- ── ROTATABLE: CYL Axis ring LEFT ── -->
+<g id="cax-ring-L" class="rdial hs" data-part="cylAxisDial" data-rotdial="cax-ring-L">
+  <circle cx="195" cy="355" r="88" fill="#d0d0d0" stroke="#b0b0b0" stroke-width="1.5"/>
+  <circle cx="195" cy="355" r="76" fill="#6a6a6a" stroke="#555" stroke-width="1.2"/>
+  <!-- Axis ticks and numbers generated by JS -->
+  <g id="cax-ticks-L"></g>
+  <!-- Hover -->
+  <circle cx="195" cy="355" r="89" fill="none" stroke="#06b6d4" stroke-width="3" opacity="0" class="rdial-ring"/>
+</g>
 
-        <!-- Dark inner ring (lens housing) -->
-        <circle cx="195" cy="355" r="74" fill="#242424" stroke="#404040" stroke-width="1.5"/>
+<!-- Fixed axis indicator (red line at top, stays still) -->
+<line x1="195" y1="266" x2="195" y2="280" stroke="#ff4040" stroke-width="3" stroke-linecap="round"/>
+<circle cx="195" cy="264" r="3.5" fill="#ff4040"/>
 
-        <!-- Main aperture (viewing lens) -->
-        <g class="hs" data-part="aperture">
-          <circle cx="195" cy="355" r="57" fill="url(#aperture)"/>
-          <!-- Lens reflection -->
-          <ellipse cx="176" cy="336" rx="20" ry="13" fill="url(#lensRef)" transform="rotate(-20 176 336)"/>
-          <ellipse cx="210" cy="372" rx="10" ry="6" fill="#0a1a40" opacity="0.3"/>
-          <!-- Rim -->
-          <circle cx="195" cy="355" r="57" fill="none" stroke="#1e1e1e" stroke-width="2.5"/>
-          <!-- Crosshair faint -->
-          <line x1="170" y1="355" x2="220" y2="355" stroke="#0d2d0d" stroke-width="0.6" opacity="0.6"/>
-          <line x1="195" y1="330" x2="195" y2="380" stroke="#0d2d0d" stroke-width="0.6" opacity="0.6"/>
-          <circle cx="195" cy="355" r="58" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-        </g>
+<!-- Dark inner ring (masks inner of axis ring) -->
+<circle cx="195" cy="355" r="74" fill="#202020" stroke="#3a3a3a" stroke-width="1.5"/>
 
-      </g><!-- /left-eye -->
+<!-- Aperture -->
+<g class="hs" data-part="aperture">
+  <circle cx="195" cy="355" r="57" fill="url(#aperture)"/>
+  <ellipse cx="176" cy="336" rx="20" ry="13" fill="url(#lensRef)" transform="rotate(-20 176 336)"/>
+  <circle cx="195" cy="355" r="57" fill="none" stroke="#1e1e1e" stroke-width="2.5"/>
+  <line x1="170" y1="355" x2="220" y2="355" stroke="#0d2d0d" stroke-width="0.6" opacity="0.6"/>
+  <line x1="195" y1="330" x2="195" y2="380" stroke="#0d2d0d" stroke-width="0.6" opacity="0.6"/>
+  <circle cx="195" cy="355" r="58" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
+</g>
 
-      <!-- Left Auxiliary Lens Dial (swing-arm, front) -->
-      <g class="hs" data-part="auxLensDial">
-        <!-- Arm -->
-        <line x1="215" y1="270" x2="278" y2="296" stroke="url(#sg1)" stroke-width="8" stroke-linecap="round"/>
-        <!-- Dial body -->
-        <circle cx="294" cy="290" r="37" fill="url(#outerRing)" stroke="#b0b0b0" stroke-width="2" filter="url(#ds2)"/>
-        <circle cx="294" cy="290" r="30" fill="#b8b8b8" stroke="#aaa" stroke-width="1.2"/>
-        <circle cx="294" cy="290" r="17" fill="url(#aperture)"/>
-        <!-- Mini ticks -->
-        <circle cx="294" cy="290" r="23" fill="none" stroke="#666" stroke-width="0.8" stroke-dasharray="2 5"/>
-        <!-- Selection lever -->
-        <line x1="294" y1="253" x2="292" y2="230" stroke="url(#sg1)" stroke-width="6" stroke-linecap="round"/>
-        <circle cx="292" cy="224" r="10" fill="url(#knob)" stroke="#bbb" stroke-width="1.2"/>
-        <circle cx="292" cy="224" r="5" fill="url(#knobSm)"/>
-        <!-- Hover -->
-        <circle cx="294" cy="290" r="39" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-      </g>
+<!-- Auxiliary Lens Dial LEFT -->
+<g class="rdial hs" data-part="auxLensDial" data-rotdial="aux-L">
+  <line x1="215" y1="272" x2="278" y2="298" stroke="url(#sg1)" stroke-width="8" stroke-linecap="round"/>
+  <g id="aux-L-body">
+    <circle cx="294" cy="292" r="37" fill="url(#outerRing)" stroke="#b0b0b0" stroke-width="2" filter="url(#ds2)"/>
+    <circle cx="294" cy="292" r="30" fill="#b8b8b8" stroke="#aaa" stroke-width="1.2"/>
+    <circle cx="294" cy="292" r="17" fill="url(#aperture)"/>
+    <line x1="294" y1="262" x2="294" y2="268" stroke="#444" stroke-width="1.5"/>
+    <line x1="294" y1="316" x2="294" y2="322" stroke="#444" stroke-width="1.5"/>
+    <line x1="264" y1="292" x2="270" y2="292" stroke="#444" stroke-width="1.5"/>
+    <line x1="318" y1="292" x2="324" y2="292" stroke="#444" stroke-width="1.5"/>
+  </g>
+  <line x1="294" y1="255" x2="292" y2="232" stroke="url(#sg1)" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="292" cy="226" r="10" fill="url(#knob)" stroke="#bbb" stroke-width="1.2"/>
+  <circle cx="294" cy="292" r="39" fill="none" stroke="#06b6d4" stroke-width="2.5" opacity="0" class="rdial-ring"/>
+</g>
 
-      <!-- Left Aux Lens Knob (on housing side) -->
-      <g class="hs" data-part="auxLensKnob">
-        <circle cx="112" cy="260" r="24" fill="url(#knob)" stroke="#bbb" stroke-width="1.8" filter="url(#ds2)"/>
-        <circle cx="112" cy="260" r="15" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.8"/>
-        <circle cx="112" cy="260" r="6" fill="#888"/>
-        <!-- Notch indicator -->
-        <line x1="112" y1="237" x2="112" y2="242" stroke="#aaa" stroke-width="2" stroke-linecap="round"/>
-        <text x="99" y="290" font-family="monospace" font-size="7" fill="#888">OC</text>
-        <text x="97" y="302" font-family="monospace" font-size="7" fill="#888">PL</text>
-        <text x="99" y="314" font-family="monospace" font-size="7" fill="#888">PH</text>
-        <circle cx="112" cy="260" r="26" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-      </g>
+<!-- Aux lens knob (left housing side) -->
+<g class="hs" data-part="auxLensKnob">
+  <circle cx="112" cy="262" r="24" fill="url(#knob)" stroke="#bbb" stroke-width="1.8" filter="url(#ds2)"/>
+  <circle cx="112" cy="262" r="15" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.8"/>
+  <circle cx="112" cy="262" r="6" fill="#888"/>
+  <circle cx="112" cy="262" r="26" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
+</g>
 
-      <!-- Left Sphere Numerical Display Window -->
-      <g class="hs" data-part="sphWindow">
-        <rect x="74" y="346" width="48" height="24" rx="4" fill="white" stroke="#909090" stroke-width="1.5"/>
-        <rect x="76" y="348" width="44" height="20" rx="3" fill="#f8f8f8"/>
-        <text x="98" y="362" font-family="'Courier New', monospace" font-size="10" font-weight="bold" fill="#cc0000" text-anchor="middle">−2.50</text>
-        <rect x="72" y="344" width="52" height="28" rx="5" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-      </g>
+<!-- SPH display (left) -->
+<g class="hs" data-part="sphWindow">
+  <rect x="72" y="346" width="52" height="24" rx="4" fill="white" stroke="#909090" stroke-width="1.5"/>
+  <rect x="74" y="348" width="48" height="20" rx="3" fill="#f8f8f8"/>
+  <text id="sph-disp-L" x="98" y="362" font-family="'Courier New',monospace" font-size="9.5" font-weight="bold" fill="#cc0000" text-anchor="middle">+0.00</text>
+  <rect x="70" y="344" width="56" height="28" rx="5" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
+</g>
 
-      <!-- Left Prism Rotation Knob (inner side) -->
-      <g class="hs" data-part="prismKnob">
-        <circle cx="256" cy="355" r="22" fill="url(#knob)" stroke="#bbb" stroke-width="1.5" filter="url(#ds2)"/>
-        <circle cx="256" cy="355" r="13" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.8"/>
-        <circle cx="256" cy="355" r="5" fill="#888"/>
-        <!-- Δ symbol -->
-        <text x="256" y="359" font-family="sans-serif" font-size="8" fill="#555" text-anchor="middle">Δ</text>
-        <circle cx="256" cy="355" r="24" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-      </g>
+<!-- Prism knob left -->
+<g class="hs" data-part="prismKnob">
+  <circle cx="256" cy="355" r="22" fill="url(#knob)" stroke="#bbb" stroke-width="1.5" filter="url(#ds2)"/>
+  <circle cx="256" cy="355" r="13" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.8"/>
+  <text x="256" y="360" font-family="sans-serif" font-size="9" fill="#555" text-anchor="middle">Δ</text>
+  <circle cx="256" cy="355" r="24" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
+</g>
 
-      <!-- Left Cylinder Diopter Knob -->
-      <g class="hs" data-part="cylKnob">
-        <circle cx="195" cy="490" r="30" fill="url(#knob)" stroke="#bbb" stroke-width="2" filter="url(#ds2)"/>
-        <circle cx="195" cy="490" r="20" fill="url(#knobSm)" stroke="#ccc" stroke-width="1"/>
-        <circle cx="195" cy="490" r="8" fill="#9a9a9a" stroke="#aaa" stroke-width="0.6"/>
-        <!-- Knurling notches -->
-        <line x1="195" y1="461" x2="195" y2="466" stroke="#aaa" stroke-width="2"/>
-        <line x1="216" y1="468" x2="212" y2="472" stroke="#aaa" stroke-width="2"/>
-        <line x1="221" y1="490" x2="216" y2="490" stroke="#aaa" stroke-width="2"/>
-        <line x1="216" y1="512" x2="212" y2="508" stroke="#aaa" stroke-width="2"/>
-        <line x1="174" y1="468" x2="178" y2="472" stroke="#aaa" stroke-width="2"/>
-        <line x1="169" y1="490" x2="174" y2="490" stroke="#aaa" stroke-width="2"/>
-        <circle cx="195" cy="490" r="32" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-      </g>
+<!-- ── ROTATABLE: CYL knob LEFT ── -->
+<g id="cyl-knob-L" class="rdial hs" data-part="cylKnob" data-rotdial="cyl-knob-L">
+  <circle cx="195" cy="490" r="30" fill="url(#knob)" stroke="#bbb" stroke-width="2" filter="url(#ds2)"/>
+  <circle cx="195" cy="490" r="20" fill="url(#knobSm)" stroke="#ccc" stroke-width="1"/>
+  <circle cx="195" cy="490" r="8" fill="#9a9a9a" stroke="#aaa" stroke-width="0.6"/>
+  <!-- Knurling notches (rotate with knob) -->
+  <g id="cyl-notches-L">
+    <line x1="195" y1="461" x2="195" y2="467" stroke="#aaa" stroke-width="2"/>
+    <line x1="216" y1="468" x2="211" y2="473" stroke="#aaa" stroke-width="2"/>
+    <line x1="222" y1="490" x2="216" y2="490" stroke="#aaa" stroke-width="2"/>
+    <line x1="216" y1="512" x2="211" y2="507" stroke="#aaa" stroke-width="2"/>
+    <line x1="174" y1="468" x2="179" y2="473" stroke="#aaa" stroke-width="2"/>
+    <line x1="168" y1="490" x2="174" y2="490" stroke="#aaa" stroke-width="2"/>
+    <line x1="174" y1="512" x2="179" y2="507" stroke="#aaa" stroke-width="2"/>
+  </g>
+  <circle cx="195" cy="490" r="32" fill="none" stroke="#06b6d4" stroke-width="2.5" opacity="0" class="rdial-ring"/>
+</g>
 
-      <!-- Left Cylinder Axis Display Window -->
-      <g class="hs" data-part="cylAxisDisplay">
-        <rect x="86" y="415" width="54" height="24" rx="4" fill="#e8e8e8" stroke="#909090" stroke-width="1.5"/>
-        <rect x="88" y="417" width="50" height="20" rx="3" fill="#f5f5f5"/>
-        <text x="113" y="431" font-family="'Courier New', monospace" font-size="10" font-weight="bold" fill="#222" text-anchor="middle">090°</text>
-        <rect x="84" y="413" width="58" height="28" rx="5" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-      </g>
+<!-- CYL value display left -->
+<g class="hs" data-part="cylKnob">
+  <rect x="138" y="485" width="44" height="20" rx="3" fill="#e8e8e8" stroke="#909090" stroke-width="1.2"/>
+  <text id="cyl-disp-L" x="160" y="499" font-family="'Courier New',monospace" font-size="9" font-weight="bold" fill="#880000" text-anchor="middle">−0.00</text>
+  <rect x="136" y="483" width="48" height="24" rx="4" fill="none" stroke="#06b6d4" stroke-width="2" class="hr"/>
+</g>
 
-      <!-- ═══════════════════════════════════════════
-           RIGHT EYE HOUSING (mirror)
-      ═══════════════════════════════════════════ -->
-      <g id="right-eye" filter="url(#ds)">
+<!-- Axis display window left -->
+<g class="hs" data-part="cylAxisDisplay">
+  <rect x="86" y="416" width="54" height="22" rx="4" fill="#e8e8e8" stroke="#909090" stroke-width="1.5"/>
+  <text id="cax-disp-L" x="113" y="430" font-family="'Courier New',monospace" font-size="10" font-weight="bold" fill="#222" text-anchor="middle">000°</text>
+  <rect x="84" y="414" width="58" height="26" rx="5" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
+</g>
 
-        <g class="hs" data-part="sphericalDisk">
-          <circle cx="545" cy="355" r="133" fill="#484848" stroke="#333" stroke-width="1"/>
-          <circle cx="545" cy="355" r="130" fill="url(#outerRing)" stroke="#c0c0c0" stroke-width="1.5"/>
-          <circle cx="545" cy="355" r="110" fill="#585858" stroke="#484848" stroke-width="1.5"/>
-          <circle id="R-sph-ticks" cx="545" cy="355" r="120"/>
-          <text x="545" y="235" font-family="monospace" font-size="10" fill="#1a1a1a" text-anchor="middle" font-weight="bold">0</text>
-          <text x="656" y="270" font-family="monospace" font-size="9" fill="#1a1a1a" text-anchor="middle">+3</text>
-          <text x="678" y="355" font-family="monospace" font-size="9" fill="#1a1a1a" text-anchor="middle">+6</text>
-          <text x="656" y="445" font-family="monospace" font-size="9" fill="#1a1a1a" text-anchor="middle">+9</text>
-          <text x="434" y="270" font-family="monospace" font-size="9" fill="#1a1a1a" text-anchor="middle">−3</text>
-          <text x="412" y="355" font-family="monospace" font-size="9" fill="#1a1a1a" text-anchor="middle">−6</text>
-          <text x="434" y="445" font-family="monospace" font-size="9" fill="#1a1a1a" text-anchor="middle">−9</text>
-          <circle cx="545" cy="355" r="132" fill="none" stroke="#06b6d4" stroke-width="3" class="hr"/>
-        </g>
 
-        <circle cx="545" cy="355" r="108" fill="url(#housing)" stroke="#909090" stroke-width="1.5"/>
-        <path d="M 470 295 A 90 90 0 0 1 620 295" stroke="rgba(255,255,255,0.15)" stroke-width="8" fill="none" stroke-linecap="round"/>
+<!-- ══════════════════════════════════════════════
+     RIGHT EYE (OD)
+══════════════════════════════════════════════ -->
 
-        <g class="hs" data-part="cylAxisDial">
-          <circle cx="545" cy="355" r="88" fill="#cccccc" stroke="#aaa" stroke-width="1.5"/>
-          <circle cx="545" cy="355" r="76" fill="#6e6e6e" stroke="#585858" stroke-width="1.2"/>
-          <circle cx="545" cy="355" r="82" fill="none" stroke="#444" stroke-width="0.8" stroke-dasharray="1.8 4"/>
-          <text x="545" y="272" font-family="monospace" font-size="8" fill="#e0e0e0" text-anchor="middle">180</text>
-          <text x="630" y="358" font-family="monospace" font-size="8" fill="#e0e0e0" text-anchor="middle">90</text>
-          <text x="545" y="444" font-family="monospace" font-size="8" fill="#e0e0e0" text-anchor="middle">0</text>
-          <text x="460" y="358" font-family="monospace" font-size="8" fill="#e0e0e0" text-anchor="middle">270</text>
-          <line x1="545" y1="268" x2="545" y2="278" stroke="#ff6060" stroke-width="2.5" stroke-linecap="round"/>
-          <circle cx="545" cy="355" r="89" fill="none" stroke="#06b6d4" stroke-width="3" class="hr"/>
-        </g>
+<circle cx="545" cy="357" r="135" fill="#303030" filter="url(#ds)"/>
 
-        <circle cx="545" cy="355" r="74" fill="#242424" stroke="#404040" stroke-width="1.5"/>
+<!-- ── ROTATABLE: SPH ring RIGHT ── -->
+<g id="sph-ring-R" class="rdial hs" data-part="sphericalDisk" data-rotdial="sph-ring-R">
+  <circle cx="545" cy="355" r="133" fill="#484848" stroke="#383838" stroke-width="1"/>
+  <circle cx="545" cy="355" r="130" fill="url(#outerRing)" stroke="#c8c8c8" stroke-width="1.5"/>
+  <g id="sph-ticks-R"></g>
+  <circle cx="545" cy="355" r="131" fill="none" stroke="#06b6d4" stroke-width="3" opacity="0" class="rdial-ring"/>
+</g>
 
-        <g class="hs" data-part="aperture">
-          <circle cx="545" cy="355" r="57" fill="url(#aperture)"/>
-          <ellipse cx="526" cy="336" rx="20" ry="13" fill="url(#lensRef)" transform="rotate(-20 526 336)"/>
-          <ellipse cx="560" cy="372" rx="10" ry="6" fill="#0a1a40" opacity="0.3"/>
-          <circle cx="545" cy="355" r="57" fill="none" stroke="#1e1e1e" stroke-width="2.5"/>
-          <line x1="520" y1="355" x2="570" y2="355" stroke="#0d2d0d" stroke-width="0.6" opacity="0.6"/>
-          <line x1="545" y1="330" x2="545" y2="380" stroke="#0d2d0d" stroke-width="0.6" opacity="0.6"/>
-          <circle cx="545" cy="355" r="58" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-        </g>
+<circle cx="545" cy="355" r="108" fill="url(#housing)" stroke="#909090" stroke-width="1.5"/>
+<path d="M 472 297 A 88 88 0 0 1 618 297" stroke="rgba(255,255,255,0.14)" stroke-width="8" fill="none" stroke-linecap="round"/>
 
-      </g><!-- /right-eye -->
+<!-- ── ROTATABLE: CYL Axis ring RIGHT ── -->
+<g id="cax-ring-R" class="rdial hs" data-part="cylAxisDial" data-rotdial="cax-ring-R">
+  <circle cx="545" cy="355" r="88" fill="#d0d0d0" stroke="#b0b0b0" stroke-width="1.5"/>
+  <circle cx="545" cy="355" r="76" fill="#6a6a6a" stroke="#555" stroke-width="1.2"/>
+  <g id="cax-ticks-R"></g>
+  <circle cx="545" cy="355" r="89" fill="none" stroke="#06b6d4" stroke-width="3" opacity="0" class="rdial-ring"/>
+</g>
 
-      <!-- Right Auxiliary Lens Dial -->
-      <g class="hs" data-part="auxLensDial">
-        <line x1="525" y1="270" x2="462" y2="296" stroke="url(#sg1)" stroke-width="8" stroke-linecap="round"/>
-        <circle cx="446" cy="290" r="37" fill="url(#outerRing)" stroke="#b0b0b0" stroke-width="2" filter="url(#ds2)"/>
-        <circle cx="446" cy="290" r="30" fill="#b8b8b8" stroke="#aaa" stroke-width="1.2"/>
-        <circle cx="446" cy="290" r="17" fill="url(#aperture)"/>
-        <circle cx="446" cy="290" r="23" fill="none" stroke="#666" stroke-width="0.8" stroke-dasharray="2 5"/>
-        <line x1="446" y1="253" x2="448" y2="230" stroke="url(#sg1)" stroke-width="6" stroke-linecap="round"/>
-        <circle cx="448" cy="224" r="10" fill="url(#knob)" stroke="#bbb" stroke-width="1.2"/>
-        <circle cx="448" cy="224" r="5" fill="url(#knobSm)"/>
-        <circle cx="446" cy="290" r="39" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-      </g>
+<line x1="545" y1="266" x2="545" y2="280" stroke="#ff4040" stroke-width="3" stroke-linecap="round"/>
+<circle cx="545" cy="264" r="3.5" fill="#ff4040"/>
 
-      <!-- Right Aux Lens Knob -->
-      <g class="hs" data-part="auxLensKnob">
-        <circle cx="628" cy="260" r="24" fill="url(#knob)" stroke="#bbb" stroke-width="1.8" filter="url(#ds2)"/>
-        <circle cx="628" cy="260" r="15" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.8"/>
-        <circle cx="628" cy="260" r="6" fill="#888"/>
-        <line x1="628" y1="237" x2="628" y2="242" stroke="#aaa" stroke-width="2" stroke-linecap="round"/>
-        <text x="615" y="290" font-family="monospace" font-size="7" fill="#888">OC</text>
-        <text x="613" y="302" font-family="monospace" font-size="7" fill="#888">PL</text>
-        <text x="615" y="314" font-family="monospace" font-size="7" fill="#888">PH</text>
-        <circle cx="628" cy="260" r="26" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-      </g>
+<circle cx="545" cy="355" r="74" fill="#202020" stroke="#3a3a3a" stroke-width="1.5"/>
 
-      <!-- Right Sphere Display Window -->
-      <g class="hs" data-part="sphWindow">
-        <rect x="618" y="346" width="48" height="24" rx="4" fill="white" stroke="#909090" stroke-width="1.5"/>
-        <rect x="620" y="348" width="44" height="20" rx="3" fill="#f8f8f8"/>
-        <text x="642" y="362" font-family="'Courier New', monospace" font-size="10" font-weight="bold" fill="#000" text-anchor="middle">+1.25</text>
-        <rect x="616" y="344" width="52" height="28" rx="5" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-      </g>
+<g class="hs" data-part="aperture">
+  <circle cx="545" cy="355" r="57" fill="url(#aperture)"/>
+  <ellipse cx="526" cy="336" rx="20" ry="13" fill="url(#lensRef)" transform="rotate(-20 526 336)"/>
+  <circle cx="545" cy="355" r="57" fill="none" stroke="#1e1e1e" stroke-width="2.5"/>
+  <line x1="520" y1="355" x2="570" y2="355" stroke="#0d2d0d" stroke-width="0.6" opacity="0.6"/>
+  <line x1="545" y1="330" x2="545" y2="380" stroke="#0d2d0d" stroke-width="0.6" opacity="0.6"/>
+  <circle cx="545" cy="355" r="58" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
+</g>
 
-      <!-- Right Prism Knob -->
-      <g class="hs" data-part="prismKnob">
-        <circle cx="484" cy="355" r="22" fill="url(#knob)" stroke="#bbb" stroke-width="1.5" filter="url(#ds2)"/>
-        <circle cx="484" cy="355" r="13" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.8"/>
-        <circle cx="484" cy="355" r="5" fill="#888"/>
-        <text x="484" y="359" font-family="sans-serif" font-size="8" fill="#555" text-anchor="middle">Δ</text>
-        <circle cx="484" cy="355" r="24" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-      </g>
+<!-- Auxiliary Lens Dial RIGHT -->
+<g class="rdial hs" data-part="auxLensDial" data-rotdial="aux-R">
+  <line x1="525" y1="272" x2="462" y2="298" stroke="url(#sg1)" stroke-width="8" stroke-linecap="round"/>
+  <g id="aux-R-body">
+    <circle cx="446" cy="292" r="37" fill="url(#outerRing)" stroke="#b0b0b0" stroke-width="2" filter="url(#ds2)"/>
+    <circle cx="446" cy="292" r="30" fill="#b8b8b8" stroke="#aaa" stroke-width="1.2"/>
+    <circle cx="446" cy="292" r="17" fill="url(#aperture)"/>
+    <line x1="446" y1="262" x2="446" y2="268" stroke="#444" stroke-width="1.5"/>
+    <line x1="446" y1="316" x2="446" y2="322" stroke="#444" stroke-width="1.5"/>
+    <line x1="416" y1="292" x2="422" y2="292" stroke="#444" stroke-width="1.5"/>
+    <line x1="470" y1="292" x2="476" y2="292" stroke="#444" stroke-width="1.5"/>
+  </g>
+  <line x1="446" y1="255" x2="448" y2="232" stroke="url(#sg1)" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="448" cy="226" r="10" fill="url(#knob)" stroke="#bbb" stroke-width="1.2"/>
+  <circle cx="446" cy="292" r="39" fill="none" stroke="#06b6d4" stroke-width="2.5" opacity="0" class="rdial-ring"/>
+</g>
 
-      <!-- Right Cylinder Diopter Knob -->
-      <g class="hs" data-part="cylKnob">
-        <circle cx="545" cy="490" r="30" fill="url(#knob)" stroke="#bbb" stroke-width="2" filter="url(#ds2)"/>
-        <circle cx="545" cy="490" r="20" fill="url(#knobSm)" stroke="#ccc" stroke-width="1"/>
-        <circle cx="545" cy="490" r="8" fill="#9a9a9a" stroke="#aaa" stroke-width="0.6"/>
-        <line x1="545" y1="461" x2="545" y2="466" stroke="#aaa" stroke-width="2"/>
-        <line x1="566" y1="468" x2="562" y2="472" stroke="#aaa" stroke-width="2"/>
-        <line x1="571" y1="490" x2="566" y2="490" stroke="#aaa" stroke-width="2"/>
-        <line x1="566" y1="512" x2="562" y2="508" stroke="#aaa" stroke-width="2"/>
-        <line x1="524" y1="468" x2="528" y2="472" stroke="#aaa" stroke-width="2"/>
-        <line x1="519" y1="490" x2="524" y2="490" stroke="#aaa" stroke-width="2"/>
-        <circle cx="545" cy="490" r="32" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-      </g>
+<g class="hs" data-part="auxLensKnob">
+  <circle cx="628" cy="262" r="24" fill="url(#knob)" stroke="#bbb" stroke-width="1.8" filter="url(#ds2)"/>
+  <circle cx="628" cy="262" r="15" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.8"/>
+  <circle cx="628" cy="262" r="6" fill="#888"/>
+  <circle cx="628" cy="262" r="26" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
+</g>
 
-      <!-- Right Cylinder Axis Display -->
-      <g class="hs" data-part="cylAxisDisplay">
-        <rect x="600" y="415" width="54" height="24" rx="4" fill="#e8e8e8" stroke="#909090" stroke-width="1.5"/>
-        <rect x="602" y="417" width="50" height="20" rx="3" fill="#f5f5f5"/>
-        <text x="627" y="431" font-family="'Courier New', monospace" font-size="10" font-weight="bold" fill="#222" text-anchor="middle">090°</text>
-        <rect x="598" y="413" width="58" height="28" rx="5" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-      </g>
+<!-- SPH display (right) -->
+<g class="hs" data-part="sphWindow">
+  <rect x="616" y="346" width="52" height="24" rx="4" fill="white" stroke="#909090" stroke-width="1.5"/>
+  <rect x="618" y="348" width="48" height="20" rx="3" fill="#f8f8f8"/>
+  <text id="sph-disp-R" x="642" y="362" font-family="'Courier New',monospace" font-size="9.5" font-weight="bold" fill="#000" text-anchor="middle">+0.00</text>
+  <rect x="614" y="344" width="56" height="28" rx="5" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
+</g>
 
-      <!-- Forehead distance adjustment (bottom center) -->
-      <g class="hs" data-part="foreheadAdjust">
-        <rect x="325" y="515" width="90" height="20" rx="5" fill="url(#sg1)" stroke="#aaa" stroke-width="1.2"/>
-        <circle cx="370" cy="510" r="17" fill="url(#knob)" stroke="#bbb" stroke-width="1.5" filter="url(#ds2)"/>
-        <circle cx="370" cy="510" r="10" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.8"/>
-        <circle cx="370" cy="510" r="4" fill="#888"/>
-        <circle cx="370" cy="510" r="19" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-      </g>
+<g class="hs" data-part="prismKnob">
+  <circle cx="484" cy="355" r="22" fill="url(#knob)" stroke="#bbb" stroke-width="1.5" filter="url(#ds2)"/>
+  <circle cx="484" cy="355" r="13" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.8"/>
+  <text x="484" y="360" font-family="sans-serif" font-size="9" fill="#555" text-anchor="middle">Δ</text>
+  <circle cx="484" cy="355" r="24" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
+</g>
 
-    </svg>
-  </div>
-</div>
+<!-- ── ROTATABLE: CYL knob RIGHT ── -->
+<g id="cyl-knob-R" class="rdial hs" data-part="cylKnob" data-rotdial="cyl-knob-R">
+  <circle cx="545" cy="490" r="30" fill="url(#knob)" stroke="#bbb" stroke-width="2" filter="url(#ds2)"/>
+  <circle cx="545" cy="490" r="20" fill="url(#knobSm)" stroke="#ccc" stroke-width="1"/>
+  <circle cx="545" cy="490" r="8" fill="#9a9a9a" stroke="#aaa" stroke-width="0.6"/>
+  <g id="cyl-notches-R">
+    <line x1="545" y1="461" x2="545" y2="467" stroke="#aaa" stroke-width="2"/>
+    <line x1="566" y1="468" x2="561" y2="473" stroke="#aaa" stroke-width="2"/>
+    <line x1="572" y1="490" x2="566" y2="490" stroke="#aaa" stroke-width="2"/>
+    <line x1="566" y1="512" x2="561" y2="507" stroke="#aaa" stroke-width="2"/>
+    <line x1="524" y1="468" x2="529" y2="473" stroke="#aaa" stroke-width="2"/>
+    <line x1="518" y1="490" x2="524" y2="490" stroke="#aaa" stroke-width="2"/>
+    <line x1="524" y1="512" x2="529" y2="507" stroke="#aaa" stroke-width="2"/>
+  </g>
+  <circle cx="545" cy="490" r="32" fill="none" stroke="#06b6d4" stroke-width="2.5" opacity="0" class="rdial-ring"/>
+</g>
+
+<!-- CYL display right -->
+<g class="hs" data-part="cylKnob">
+  <rect x="558" y="485" width="44" height="20" rx="3" fill="#e8e8e8" stroke="#909090" stroke-width="1.2"/>
+  <text id="cyl-disp-R" x="580" y="499" font-family="'Courier New',monospace" font-size="9" font-weight="bold" fill="#880000" text-anchor="middle">−0.00</text>
+  <rect x="556" y="483" width="48" height="24" rx="4" fill="none" stroke="#06b6d4" stroke-width="2" class="hr"/>
+</g>
+
+<!-- Axis display right -->
+<g class="hs" data-part="cylAxisDisplay">
+  <rect x="600" y="416" width="54" height="22" rx="4" fill="#e8e8e8" stroke="#909090" stroke-width="1.5"/>
+  <text id="cax-disp-R" x="627" y="430" font-family="'Courier New',monospace" font-size="10" font-weight="bold" fill="#222" text-anchor="middle">000°</text>
+  <rect x="598" y="414" width="58" height="26" rx="5" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
+</g>
+
+<!-- Forehead adjustment -->
+<g class="hs" data-part="foreheadAdjust">
+  <rect x="325" y="516" width="90" height="20" rx="5" fill="url(#sg1)" stroke="#aaa" stroke-width="1.2"/>
+  <circle cx="370" cy="511" r="17" fill="url(#knob)" stroke="#bbb" stroke-width="1.5" filter="url(#ds2)"/>
+  <circle cx="370" cy="511" r="10" fill="url(#knobSm)"/>
+  <circle cx="370" cy="511" r="19" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
+</g>
+
+</svg>
+  </div><!-- /wrap -->
+</div><!-- /scene -->
 
 <footer>
-  לחץ וגרור לסיבוב תלת-ממדי 360° &nbsp;•&nbsp; רחף מעל כל רכיב כדי ללמוד על שמו ותפקידו בבדיקת ראייה &nbsp;•&nbsp; פורופטר VT-5C
+  גרור את <strong>הרקע</strong> לסיבוב 3D כללי &nbsp;•&nbsp;
+  גרור את <strong>טבעת ה-SPH</strong> (כסוף חיצוני) לשינוי ספירה &nbsp;•&nbsp;
+  גרור את <strong>טבעת הציר</strong> (כסוף פנימי) לשינוי ציר אסטיגמציה &nbsp;•&nbsp;
+  גרור את <strong>כפתור ה-CYL</strong> (תחתון) לשינוי צילינדר
 </footer>
 
 <script>
-// ═══════════════════════════════════════════
-// PARTS DATA
-// ═══════════════════════════════════════════
+// ══════════════════════════════════════════
+// PARTS DATA (tooltip content)
+// ══════════════════════════════════════════
 const PARTS = {
-  rotatingKnob: {
-    title: "Rotating Adjusting Knob — כפתור כיוון מסתובב",
-    desc: "שני הכפתורים בחלק העליון מאפשרים לכוון את זווית ההטיה של הפורופטר כלפי המטופל. לאחר קיבוע הגובה הנכון, יש להדק כדי לנעול את המנח.",
-    color: "#0ea5e9"
-  },
-  fixingKnob: {
-    title: "Fixing Knob — כפתור נעילה",
-    desc: "מנעל את הפורופטר בגובה ובזווית הרצויים לאורך עמוד הנשיאה. יש לשחרר לפני כל כיוון גובה ולהדק חזק לאחר קיבוע — תנועת מכשיר בזמן הבדיקה מבטלת את מהימנות התוצאות.",
-    color: "#3b82f6"
-  },
-  fixedPort: {
-    title: "Fixed Insertion Port — נקודת חיבור קבועה",
-    desc: "חיבור סטנדרטי לעמוד הנשיאה של כיסא הבדיקה או של מנורת הסדק. המבנה האחיד מבטיח שהפורופטר יישאר מיושר בכל עת, גם בין מטופלים.",
-    color: "#94a3b8"
-  },
-  lockingScrew: {
-    title: "Locking Screw of Near Point Rod — בורג נעילת מוט קרוב-ראייה",
-    desc: "מנעל את זרוע מוט הקרוב-ראייה (near point rod) במיקומה. הזרוע משמשת לבדיקות אקומודציה, קונברגנציה ופוריה קרובה, ויש לנעלה במרחק הקריאה המדויק (בדרך כלל 40 ס\"מ).",
-    color: "#9ca3af"
-  },
-  horizontalKnob: {
-    title: "Horizontal Adjusting Knob — כפתור כיוון אופקי",
-    desc: "מאפשר הזזה אופקית של הפורופטר ימינה ושמאלה. בשימוש לאחר כיוון האנכי — מוודא שמרכז כל עדשה מיושר בדיוק מול האישון המתאים לפי ה-PD של המטופל.",
-    color: "#22d3ee"
-  },
-  pdWindow: {
-    title: "Pupil Distance Display Window — חלון תצוגת מרחק אישונים",
-    desc: "מציג את מרחק האישונים (PD) שנקבע, בדרך כלל בטווח 54–74 מ\"מ. ערכי PD נפוצים: 58–62 לנשים, 62–66 לגברים. יש לכוון לכל עין בנפרד (monocular PD) למדידות מדויקות.",
-    color: "#60a5fa"
-  },
-  pdKnob: {
-    title: "Pupil Distance Knob — כפתור מרחק אישונים (PD)",
-    desc: "מסובב את מנגנון כיוון ה-PD לאפשר הזזת העדשות לפי מרחק האישונים האמיתי של המטופל. חשוב מאוד — אי-כיוון PD נכון גורם לפריזמה לא-מכוונת ולסטייה של ציר הראייה.",
-    color: "#818cf8"
-  },
-  horizontalBubble: {
-    title: "Horizontal Bubble — בועת פילוס אופקית",
-    desc: "כלי פילוס קריטי: הפורופטר חייב להיות מפולס לחלוטין בציר האופקי לפני כל מדידה. אם המכשיר מוטה אפילו 2–3 מעלות — מדידות ציר הצילינדר (לתיקון אסטיגמציה) יהיו שגויות. הבועה הירוקה צריכה להיות בדיוק במרכז בין שני קווי הסימון.",
-    color: "#10b981"
-  },
-  auxLensKnob: {
-    title: "Auxiliary Lens Knob — כפתור עדשות עזר",
-    desc: "חוגה עם מספר עמדות לבחירת עדשת עזר מיוחדת: OC (בלתי-ראייה לכיסוי עין), PL (פלנו/עדשה שקופה), PH (פינהול לבדיקת פוטנציאל חדות), R (פריזמה קבועה), או פילטרים מיוחדים לבדיקות דו-עיניות.",
-    color: "#c084fc"
-  },
-  auxLensDial: {
-    title: "Auxiliary Lens Dial — חוגת עדשות עזר (ציר סיבוב)",
-    desc: "חוגה סיבובית שמתנדנדת מול פתח הראייה. מכילה עד 12 עדשות שונות: עדשת ג'קסון קרוס-צילינדר (JCC) לכיוון ציר אסטיגמציה, פינהול, עדשת מאפלה, פריזמות, פולארויד, ועדשות ניסוי אחרות.",
-    color: "#a78bfa"
-  },
-  sphericalDisk: {
-    title: "Spherical Disk — חוגת הספירה הראשית (SPH)",
-    desc: "הטבעת הגדולה ביותר במכשיר. מכילה מגוון עדשות ספיריות בטווח −20.00 עד +20.00 דיופטר, בצעדים של 0.25Δ. מסובבת ידנית לשינוי עוצמת הספירה. המספרים על פני הטבעת מציגים את ערך הספירה הנוכחי.",
-    color: "#fb923c"
-  },
-  sphWindow: {
-    title: "Sphere Numerical Value Display — חלון ערך ספירה",
-    desc: "חלון תצוגה קטן המציג את ערך הספירה הנוכחי בדיופטרים. ערך אדום/שלילי (−2.50) = קוצר ראייה (Myopia). ערך שחור/חיובי (+1.25) = רוחק ראייה (Hyperopia). הערך 0.00 = אין תיקון ספירה.",
-    color: "#fbbf24"
-  },
-  cylAxisDial: {
-    title: "Cylinder Axis Dial — חוגת ציר הצילינדר",
-    desc: "הטבעת הכסופה האמצעית מסביב לפתח הראייה. מסמנת את זווית ציר הצילינדר (0°–180°) לתיקון אסטיגמציה. הקו האדום בחלק העליון הוא הסמן הנוכחי. ציר 90° = אסטיגמציה 'נגד הכלל', ציר 180° = 'עם הכלל'.",
-    color: "#fb7185"
-  },
-  cylKnob: {
-    title: "Cylinder Diopter Knob — כפתור דיופטר צילינדר (CYL)",
-    desc: "הכפתור הגדול בתחתית כל עין. מכוון את עוצמת הצילינדר לתיקון אסטיגמציה, בדרך כלל בטווח 0.00 עד −6.00Δ בצעדים של 0.25. הידיות המשוחזות (knurling) מאפשרות סיבוב מדויק גם בחושך.",
-    color: "#f87171"
-  },
-  cylAxisDisplay: {
-    title: "Display Dial of Cylinder Axis — תצוגת ציר הצילינדר",
-    desc: "חלון קריאה קטן המציג את ערך ציר הצילינדר שנקבע (לדוג' 090° = ציר אנכי). מאפשר קריאה מהירה ונוחה מבלי להתכופף להסתכל על החוגה הגדולה. כתוב לרוב בשחור על רקע לבן.",
-    color: "#f472b6"
-  },
-  prismKnob: {
-    title: "Prism Rotation Knob — כפתור פריזמה (Δ)",
-    desc: "כפתור לכניסה, יציאה וסיבוב של עדשת פריזמה. פריזמות (נמדדות בפריזם-דיופטר Δ) משמשות לאבחון ותיקון הטיה בתנועות עיניים: פוריה, טרופיה, סטרביזמוס נסתר. הסמל Δ הוא הסימן הסטנדרטי לפריזם.",
-    color: "#6366f1"
-  },
-  aperture: {
-    title: "Main Viewing Aperture — פתח הראייה הראשי",
-    desc: "הפתח האפל המרכזי שדרכו המטופל צופה בלוח הבדיקה. קוטרו כ-28–32 מ\"מ. בתוך הפתח מסתובבות כל העדשות. ההשתקפות הכחולה הקלה היא תוצאת הציפוי האנטי-רפלקטיבי על עדשות המכשיר.",
-    color: "#0891b2"
-  },
-  foreheadAdjust: {
-    title: "Forehead Distance Adjustment — כיוון מרחק משענת מצח (Vertex Distance)",
-    desc: "מנגנון כיוון מרחק הפורופטר ממצח המטופל. מרחק קודקוד סטנדרטי הוא 12–14 מ\"מ. שינוי של 1 מ\"מ משפיע על עוצמת המרשם הסופי בעדשות מתקנות חזקות (>±4.00Δ). קריטי לדיוק המרשם הסופי.",
-    color: "#9ca3af"
-  }
+  rotatingKnob: { title: "Rotating Adjusting Knob — כפתורי כיוון מסתובב", desc: "שני הכפתורים בחלק העליון מאפשרים לכוון את זווית ההטיה של הפורופטר. לאחר קיבוע הגובה הנכון יש להדק את הנעילה.", color:"#0ea5e9" },
+  fixingKnob: { title: "Fixing Knob — כפתור נעילה", desc: "מנעל את הפורופטר בגובה ובזווית הרצויים לאורך עמוד הנשיאה.", color:"#3b82f6" },
+  fixedPort: { title: "Fixed Insertion Port — נקודת חיבור קבועה", desc: "חיבור סטנדרטי לעמוד הנשיאה של כיסא הבדיקה.", color:"#94a3b8" },
+  lockingScrew: { title: "Locking Screw — בורג נעילת מוט קרוב-ראייה", desc: "מנעל את זרוע מוט הקרוב-ראייה (near point rod). הזרוע משמשת לבדיקות אקומודציה וקונברגנציה בטווח קרוב.", color:"#9ca3af" },
+  horizontalKnob: { title: "Horizontal Adjusting Knob — כפתור כיוון אופקי", desc: "מאפשר הזזה אופקית של הפורופטר ימינה ושמאלה לכיוון מדויק מול האישונים.", color:"#22d3ee" },
+  pdWindow: { title: "Pupil Distance Display — חלון מרחק אישונים", desc: "מציג את מרחק האישונים (PD) שנקבע. ערך 64 מ\"מ הוא ממוצע מבוגרים. חשוב לכוון לכל עין בנפרד לדיוק מרשם.", color:"#60a5fa" },
+  pdKnob: { title: "Pupil Distance Knob — כפתור PD", desc: "מסובב את מנגנון ה-PD לאפשר הזזת העדשות לפי מרחק האישונים האמיתי. אי-כיוון גורם לפריזמה לא-מכוונת.", color:"#818cf8" },
+  horizontalBubble: { title: "Horizontal Bubble — בועת פילוס אופקית", desc: "קריטי: הפורופטר חייב להיות מפולס לחלוטין. הטיה של 2-3° תגרום לשגיאות מדידת ציר אסטיגמציה.", color:"#10b981" },
+  auxLensKnob: { title: "Auxiliary Lens Knob — כפתור עדשות עזר", desc: "בוחר עדשת עזר מיוחדת: OC (כיסוי עין), PL (פלנו שקוף), PH (פינהול), R (פריזמה), וכו'.", color:"#c084fc" },
+  auxLensDial: { title: "Auxiliary Lens Dial — חוגת עדשות עזר ↺", desc: "חוגה סיבובית המכילה עד 12 עדשות עזר שונות. כוללת JCC (ג'קסון קרוס-צילינדר) לכיוון ציר אסטיגמציה, פינהול, פריזמות ועוד.", color:"#a78bfa", rotatable: true },
+  sphericalDisk: { title: "Spherical Disk — חוגת ה-SPH הראשית ↺", desc: "הטבעת הגדולה ביותר. מכילה עדשות ספיריות בטווח −20 עד +20 דיופטר בצעדים של 0.25Δ.", color:"#fb923c", rotatable: true },
+  sphWindow: { title: "Sphere Display — חלון ערך ספירה", desc: "מציג ספירה נוכחית. אדום=קוצר ראייה (מיופיה), שחור=רוחק ראייה (היפרמטרופיה).", color:"#fbbf24" },
+  cylAxisDial: { title: "Cylinder Axis Dial — חוגת ציר צילינדר ↺", desc: "הטבעת האמצעית הכסופה. מסמנת ציר הצילינדר לתיקון אסטיגמציה (0°-180°). הקו האדום הוא הסמן הקבוע.", color:"#fb7185", rotatable: true },
+  cylKnob: { title: "Cylinder Diopter Knob — כפתור צילינדר ↺", desc: "כפתור הצילינדר התחתון. מכוון עוצמת הצילינדר (0 עד −6 דיופטר). ה-knurling מאפשר סיבוב מדויק גם בחושך.", color:"#f87171", rotatable: true },
+  cylAxisDisplay: { title: "Cylinder Axis Display — תצוגת ציר", desc: "חלון קריאה מהירה לציר הצילינדר הנוכחי. 090°=ציר אנכי, 180°=ציר אופקי.", color:"#f472b6" },
+  prismKnob: { title: "Prism Knob — כפתור פריזמה (Δ)", desc: "פריזמות (פריזם-דיופטר Δ) משמשות לאבחון סטרביזמוס, פוריה והטיית עיניים.", color:"#6366f1" },
+  aperture: { title: "Main Viewing Aperture — פתח הראייה", desc: "הפתח האפל שדרכו המטופל מסתכל בלוח הבדיקה. קוטר ~28מ\"מ. הבהוב כחלחל = ציפוי אנטי-רפלקטיבי.", color:"#0891b2" },
+  foreheadAdjust: { title: "Forehead Distance Adjustment — מרחק קודקוד", desc: "Vertex Distance סטנדרטי = 12-14מ\"מ. שינוי של 1מ\"מ משפיע על המרשם בעדשות חזקות מעל ±4.00Δ.", color:"#9ca3af" }
 };
 
-// ═══════════════════════════════════════════
+// ══════════════════════════════════════════
+// GENERATE TICK MARKS ON DIALS (JS)
+// ══════════════════════════════════════════
+function mkEl(tag, attrs) {
+  const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const [k,v] of Object.entries(attrs)) el.setAttribute(k, v);
+  return el;
+}
+
+function buildSPHTicks(groupId, cx, cy) {
+  const g = document.getElementById(groupId);
+  const innerR = 111, outerR = 127;
+  const totalTicks = 160; // 160 ticks = 40D range (0.25D each)
+  for (let i = 0; i < totalTicks; i++) {
+    const angleDeg = -90 + (i / totalTicks) * 360;
+    const rad = angleDeg * Math.PI / 180;
+    const isMajor = i % 4 === 0; // every 1D
+    const r1 = isMajor ? innerR : innerR + 4;
+    const line = mkEl('line', {
+      x1: cx + r1 * Math.cos(rad),       y1: cy + r1 * Math.sin(rad),
+      x2: cx + outerR * Math.cos(rad),   y2: cy + outerR * Math.sin(rad),
+      stroke: isMajor ? '#1a1a1a' : '#555',
+      'stroke-width': isMajor ? '1.8' : '0.8'
+    });
+    g.appendChild(line);
+  }
+  // Value labels at 0, ±2, ±4, ±6, ±8, ±10
+  const labelAngles = [
+    [-90, '0'], [-18, '+4'], [54, '+8'], [126, '+12'],
+    [-162, '-4'], [126-180, '-8'] // simplified
+  ];
+  const numR = 119;
+  // 0D at top, positive goes clockwise
+  const dPerDeg = 20 / 180; // 20D per 180 degrees
+  const valuesToLabel = [0, 4, 8, 12, -4, -8];
+  valuesToLabel.forEach(v => {
+    const angleDeg = -90 + (v / 0.25) * (360 / 160);
+    const rad = angleDeg * Math.PI / 180;
+    const t = mkEl('text', {
+      x: (cx + numR * Math.cos(rad)).toFixed(1),
+      y: (cy + numR * Math.sin(rad) + 3.5).toFixed(1),
+      'font-family': 'monospace',
+      'font-size': '8',
+      'font-weight': 'bold',
+      fill: v < 0 ? '#770000' : '#111',
+      'text-anchor': 'middle',
+      transform: `rotate(${angleDeg + 90}, ${(cx + numR * Math.cos(rad)).toFixed(1)}, ${(cy + numR * Math.sin(rad)).toFixed(1)})`
+    });
+    t.textContent = v === 0 ? '0' : (v > 0 ? '+'+v : v);
+    g.appendChild(t);
+  });
+}
+
+function buildAxisTicks(groupId, cx, cy) {
+  const g = document.getElementById(groupId);
+  const innerR = 77, outerR = 86;
+  for (let i = 0; i < 180; i++) {
+    const angleDeg = -90 + i * 2; // 0-180 mapped to 0-360
+    const rad = angleDeg * Math.PI / 180;
+    const isMajor = i % 10 === 0;
+    const isMed = i % 5 === 0;
+    const r1 = isMajor ? innerR : (isMed ? innerR + 2 : innerR + 4);
+    g.appendChild(mkEl('line', {
+      x1: cx + r1 * Math.cos(rad), y1: cy + r1 * Math.sin(rad),
+      x2: cx + outerR * Math.cos(rad), y2: cy + outerR * Math.sin(rad),
+      stroke: isMajor ? '#ccc' : '#888',
+      'stroke-width': isMajor ? '1.5' : '0.7'
+    }));
+  }
+  // Labels every 30°
+  const numR = 82;
+  [0, 30, 60, 90, 120, 150].forEach(v => {
+    const angleDeg = -90 + v * 2;
+    const rad = angleDeg * Math.PI / 180;
+    const t = mkEl('text', {
+      x: (cx + numR * Math.cos(rad)).toFixed(1),
+      y: (cy + numR * Math.sin(rad) + 3).toFixed(1),
+      'font-family': 'monospace', 'font-size': '6.5',
+      fill: '#ddd', 'text-anchor': 'middle',
+      transform: `rotate(${angleDeg + 90}, ${(cx + numR * Math.cos(rad)).toFixed(1)}, ${(cy + numR * Math.sin(rad)).toFixed(1)})`
+    });
+    t.textContent = v;
+    g.appendChild(t);
+  });
+}
+
+buildSPHTicks('sph-ticks-L', 195, 355);
+buildSPHTicks('sph-ticks-R', 545, 355);
+buildAxisTicks('cax-ticks-L', 195, 355);
+buildAxisTicks('cax-ticks-R', 545, 355);
+
+// ══════════════════════════════════════════
+// DIAL ROTATION STATE
+// ══════════════════════════════════════════
+const DIAL_CONFIG = {
+  'sph-ring-L':  { cx:195, cy:355, totalAngle:0, type:'sph', side:'L' },
+  'sph-ring-R':  { cx:545, cy:355, totalAngle:0, type:'sph', side:'R' },
+  'cax-ring-L':  { cx:195, cy:355, totalAngle:0, type:'axis', side:'L' },
+  'cax-ring-R':  { cx:545, cy:355, totalAngle:0, type:'axis', side:'R' },
+  'cyl-knob-L':  { cx:195, cy:490, totalAngle:0, type:'cyl', side:'L' },
+  'cyl-knob-R':  { cx:545, cy:490, totalAngle:0, type:'cyl', side:'R' },
+  'aux-L':       { cx:294, cy:292, totalAngle:0, type:'aux', side:'L' },
+  'aux-R':       { cx:446, cy:292, totalAngle:0, type:'aux', side:'R' },
+};
+
+let activeDial = null;
+let lastMouseAngle = 0;
+
+const svg = document.getElementById('phoropter-svg');
+
+function getSVGAngle(e, cx, cy) {
+  const pt = svg.createSVGPoint();
+  pt.x = e.clientX; pt.y = e.clientY;
+  const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
+  return Math.atan2(svgP.y - cy, svgP.x - cx) * 180 / Math.PI;
+}
+
+// Snap helpers
+function snapTo(v, step) { return Math.round(v / step) * step; }
+
+function fmtDiopter(v) {
+  const sign = v >= 0 ? '+' : '−';
+  return sign + Math.abs(v).toFixed(2);
+}
+
+function fmtAxis(v) {
+  return String(Math.round(v) % 180).padStart(3,'0') + '°';
+}
+
+function updateDialValue(id, cfg) {
+  const ang = cfg.totalAngle;
+
+  if (cfg.type === 'sph') {
+    // 360° = 20D  →  18°/D  →  4.5°/0.25D
+    const raw = snapTo(-ang / 18, 0.25);
+    const val = Math.max(-20, Math.min(20, raw));
+    const s = cfg.side;
+    document.getElementById(`sph-disp-${s}`).textContent = fmtDiopter(val);
+    document.getElementById(`sph-disp-${s}`).setAttribute('fill', val < 0 ? '#cc0000' : '#111');
+    document.getElementById(`rx-sph-${s}`).textContent = fmtDiopter(val);
+
+  } else if (cfg.type === 'axis') {
+    // 2° rotation = 1° axis change (ring covers full 180° over 360° rotation)
+    let axis = ((-ang / 2) % 180 + 180) % 180;
+    axis = snapTo(axis, 1);
+    const s = cfg.side;
+    document.getElementById(`cax-disp-${s}`).textContent = fmtAxis(axis);
+    document.getElementById(`rx-ax-${s}`).textContent = fmtAxis(axis);
+
+  } else if (cfg.type === 'cyl') {
+    // 360° = 6D  →  60°/D  →  15°/0.25D
+    const raw = snapTo(-ang / 60, 0.25);
+    const val = Math.max(-6, Math.min(0, raw));
+    const s = cfg.side;
+    document.getElementById(`cyl-disp-${s}`).textContent = '−' + Math.abs(val).toFixed(2);
+    document.getElementById(`rx-cyl-${s}`).textContent = '−' + Math.abs(val).toFixed(2);
+
+  } else if (cfg.type === 'aux') {
+    // Just rotate the body visually (snap to 30° positions = 12 positions)
+    const snapped = snapTo(cfg.totalAngle, 30);
+    const bodyId = cfg.side === 'L' ? 'aux-L-body' : 'aux-R-body';
+    document.getElementById(bodyId).setAttribute('transform',
+      `rotate(${snapped}, ${cfg.cx}, ${cfg.cy})`);
+    return; // no display update
+  }
+
+  // Apply CSS transform to SVG group
+  document.getElementById(id).setAttribute('transform',
+    `rotate(${cfg.totalAngle}, ${cfg.cx}, ${cfg.cy})`);
+}
+
+// Attach pointerdown to all rotatable dials
+document.querySelectorAll('[data-rotdial]').forEach(el => {
+  el.addEventListener('pointerdown', e => {
+    e.stopPropagation();
+    const id = el.dataset.rotdial;
+    activeDial = id;
+    const cfg = DIAL_CONFIG[id];
+    lastMouseAngle = getSVGAngle(e, cfg.cx, cfg.cy);
+    el.setPointerCapture(e.pointerId);
+    document.getElementById('scene').classList.add('dial-active');
+    e.preventDefault();
+  });
+
+  el.addEventListener('pointermove', e => {
+    if (activeDial !== el.dataset.rotdial) return;
+    const id = el.dataset.rotdial;
+    const cfg = DIAL_CONFIG[id];
+    const newAngle = getSVGAngle(e, cfg.cx, cfg.cy);
+    let delta = newAngle - lastMouseAngle;
+    if (delta > 180) delta -= 360;
+    if (delta < -180) delta += 360;
+    cfg.totalAngle += delta;
+    lastMouseAngle = newAngle;
+    updateDialValue(id, cfg);
+  });
+
+  el.addEventListener('pointerup', () => {
+    activeDial = null;
+    document.getElementById('scene').classList.remove('dial-active');
+  });
+});
+
+// ══════════════════════════════════════════
 // TOOLTIP
-// ═══════════════════════════════════════════
+// ══════════════════════════════════════════
 const tip = document.getElementById('tip');
 const tipTitle = document.getElementById('tip-title');
 const tipDesc = document.getElementById('tip-desc');
+const tipRotate = document.getElementById('tip-rotate');
 let tipTimer;
 
 document.querySelectorAll('.hs').forEach(el => {
   el.addEventListener('mouseenter', () => {
+    if (activeDial) return;
     const p = PARTS[el.dataset.part];
     if (!p) return;
-    const ring = el.querySelector('.hr');
-    if (ring) ring.setAttribute('opacity', '0.9');
+    el.querySelectorAll('.hr').forEach(r => r.setAttribute('opacity', '0.9'));
     tipTitle.textContent = p.title;
     tipDesc.textContent = p.desc;
     tip.style.borderLeftColor = p.color;
+    tipRotate.style.display = p.rotatable ? 'block' : 'none';
     tip.style.opacity = '1';
     clearTimeout(tipTimer);
   });
   el.addEventListener('mouseleave', () => {
-    const ring = el.querySelector('.hr');
-    if (ring) ring.setAttribute('opacity', '0');
+    el.querySelectorAll('.hr').forEach(r => r.setAttribute('opacity', '0'));
     tipTimer = setTimeout(() => { tip.style.opacity = '0'; }, 180);
   });
 });
 
 document.addEventListener('mousemove', e => {
   let x = e.clientX + 22, y = e.clientY + 18;
-  if (x + 310 > window.innerWidth) x = e.clientX - 318;
-  if (y + 220 > window.innerHeight) y = e.clientY - 170;
+  if (x + 300 > window.innerWidth) x = e.clientX - 305;
+  if (y + 220 > window.innerHeight) y = e.clientY - 175;
   tip.style.left = x + 'px';
   tip.style.top = y + 'px';
 });
 
-// ═══════════════════════════════════════════
-// 3D DRAG ROTATION
-// ═══════════════════════════════════════════
+// ══════════════════════════════════════════
+// 3D SCENE ROTATION (drag background)
+// ══════════════════════════════════════════
 const scene = document.getElementById('scene');
 const wrap = document.getElementById('wrap');
-let rotX = 0, rotY = 0, dragging = false, sx = 0, sy = 0;
+let rotX = 0, rotY = 0, dragging3D = false, sx = 0, sy = 0;
 
 function applyTransform(animate) {
-  if (animate) wrap.style.transition = 'transform 0.4s cubic-bezier(.25,.8,.25,1)';
-  else wrap.style.transition = 'none';
+  wrap.style.transition = animate ? 'transform 0.4s cubic-bezier(.25,.8,.25,1)' : 'none';
   wrap.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`;
   if (animate) setTimeout(() => wrap.style.transition = 'none', 420);
 }
 
 scene.addEventListener('pointerdown', e => {
-  if (e.target.closest('.hs')) return;
-  dragging = true;
+  if (e.target.closest('[data-rotdial]')) return;
+  dragging3D = true;
   sx = e.clientX - rotY;
   sy = e.clientY + rotX;
   scene.setPointerCapture(e.pointerId);
 });
 
 scene.addEventListener('pointermove', e => {
-  if (!dragging) return;
+  if (!dragging3D) return;
   rotY = Math.max(-55, Math.min(55, e.clientX - sx));
   rotX = Math.max(-35, Math.min(35, sy - e.clientY));
   applyTransform(false);
 });
 
-scene.addEventListener('pointerup', () => { dragging = false; });
+scene.addEventListener('pointerup', () => { dragging3D = false; });
 
 document.getElementById('reset-btn').addEventListener('click', e => {
   e.stopPropagation();
@@ -748,33 +854,29 @@ document.getElementById('reset-btn').addEventListener('click', e => {
   applyTransform(true);
 });
 
-// ═══════════════════════════════════════════
-// DRAW TICK MARKS ON RINGS (JS)
-// ═══════════════════════════════════════════
-function addTicks(circleId, cx, cy, r, count, len, color, sw) {
-  const el = document.getElementById(circleId);
-  if (!el) return;
-  const parent = el.parentNode;
-  for (let i = 0; i < count; i++) {
-    const angle = (i / count) * 2 * Math.PI;
-    const x1 = cx + r * Math.cos(angle);
-    const y1 = cy + r * Math.sin(angle);
-    const x2 = cx + (r + len) * Math.cos(angle);
-    const y2 = cy + (r + len) * Math.sin(angle);
-    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line.setAttribute('x1', x1.toFixed(2));
-    line.setAttribute('y1', y1.toFixed(2));
-    line.setAttribute('x2', x2.toFixed(2));
-    line.setAttribute('y2', y2.toFixed(2));
-    line.setAttribute('stroke', color);
-    line.setAttribute('stroke-width', sw);
-    parent.insertBefore(line, el);
-  }
-  el.remove();
-}
-
-addTicks('L-sph-ticks', 195, 355, 112, 72, 6, '#555', '1');
-addTicks('R-sph-ticks', 545, 355, 112, 72, 6, '#555', '1');
+document.getElementById('reset-rx-btn').addEventListener('click', e => {
+  e.stopPropagation();
+  Object.values(DIAL_CONFIG).forEach(d => d.totalAngle = 0);
+  Object.keys(DIAL_CONFIG).forEach(id => {
+    const cfg = DIAL_CONFIG[id];
+    if (cfg.type === 'aux') {
+      document.getElementById(id === 'aux-L' ? 'aux-L-body' : 'aux-R-body').removeAttribute('transform');
+    } else {
+      document.getElementById(id).removeAttribute('transform');
+    }
+    updateDialValue(id, cfg);
+  });
+  // Reset all displays to 0
+  ['L','R'].forEach(s => {
+    document.getElementById(`sph-disp-${s}`).textContent = '+0.00';
+    document.getElementById(`sph-disp-${s}`).setAttribute('fill', '#111');
+    document.getElementById(`cyl-disp-${s}`).textContent = '−0.00';
+    document.getElementById(`cax-disp-${s}`).textContent = '000°';
+    document.getElementById(`rx-sph-${s}`).textContent = '+0.00';
+    document.getElementById(`rx-cyl-${s}`).textContent = '−0.00';
+    document.getElementById(`rx-ax-${s}`).textContent = '000°';
+  });
+});
 </script>
 </body>
 </html>
