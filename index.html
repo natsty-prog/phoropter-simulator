@@ -112,7 +112,7 @@ fill.position.set(-5, 2, -4); scene.add(fill);
 const rim = new THREE.DirectionalLight(0xaaccff, 0.4);
 rim.position.set(0, -4, -5); scene.add(rim);
 
-scene.add(Object.assign(new THREE.PointLight(0xffffff, 0.6, 18), { position: new THREE.Vector3(0, 5, 3) }));
+const pt = new THREE.PointLight(0xffffff, 0.6, 18); pt.position.set(0, 5, 3); scene.add(pt);
 
 // ── CONTROLS ──────────────────────────────────────
 const controls = new OrbitControls(camera, renderer.domElement);
