@@ -1,882 +1,526 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html lang="he">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>פורופטר VT-5C — סימולטור אינטראקטיבי</title>
+  <title>פורופטר VT-5C — תלת ממד</title>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background: #0f172a;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      font-family: 'Segoe UI', sans-serif;
-      color: #e2e8f0;
-      overflow: hidden;
-      user-select: none;
-    }
-    #scene {
-      perspective: 1400px;
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      cursor: grab;
-    }
-    #scene.dial-active { cursor: default; }
-    #grid {
-      position: absolute; inset: 0;
-      background-image:
-        linear-gradient(to right, #1e293b 1px, transparent 1px),
-        linear-gradient(to bottom, #1e293b 1px, transparent 1px);
-      background-size: 50px 50px;
-      pointer-events: none;
-    }
-    #wrap { transform-style: preserve-3d; will-change: transform; }
-
-    header {
-      position: absolute; top: 0; left: 0; right: 0;
-      padding: 16px 22px;
-      display: flex; justify-content: space-between; align-items: flex-start;
-      z-index: 30; pointer-events: none;
-    }
-    header > * { pointer-events: auto; }
-    h1 { font-size: 1.35rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 10px; }
-    .subtitle { font-size: 0.72rem; color: #64748b; margin-top: 4px; }
-    .hdr-btns { display: flex; gap: 8px; }
-    .hdr-btn {
-      background: #1e293b; border: 1px solid #334155; color: #e2e8f0;
-      padding: 7px 14px; border-radius: 8px; cursor: pointer; font-size: 0.78rem;
-      transition: background 0.15s;
-    }
-    .hdr-btn:hover { background: #334155; }
-
-    /* Prescription readout panel */
-    #rx-panel {
-      position: absolute; bottom: 52px; left: 20px;
-      background: rgba(15,23,42,0.92); border: 1px solid #1e293b;
-      border-radius: 12px; padding: 12px 16px; z-index: 25;
-      backdrop-filter: blur(8px); min-width: 210px;
-      pointer-events: none;
-    }
-    #rx-panel h4 { font-size: 0.65rem; font-weight: 700; color: #475569;
-      text-transform: uppercase; letter-spacing: .1em; margin-bottom: 10px; text-align: center; }
-    .rx-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; gap: 6px; }
-    .rx-eye { font-size: 0.65rem; font-weight: 700; color: #64748b; width: 24px; text-align: left; }
-    .rx-cell { background: #0f172a; border: 1px solid #1e3a5f; border-radius: 6px;
-      padding: 3px 6px; font-family: 'Courier New', monospace; font-size: 0.75rem;
-      font-weight: 700; text-align: center; min-width: 52px; }
-    .rx-sph { color: #60a5fa; }
-    .rx-cyl { color: #f472b6; }
-    .rx-ax  { color: #34d399; }
-    .rx-label { font-size: 0.6rem; color: #334155; text-align: center; }
-    .rx-labels { display: flex; justify-content: space-between; gap: 6px; margin-bottom: 4px; padding-right: 28px; }
-    .rx-lbl { font-size: 0.6rem; color: #334155; min-width: 52px; text-align: center; }
-
-    /* Tooltip */
-    #tip {
-      position: fixed; z-index: 100;
-      width: 290px;
-      background: rgba(15,23,42,0.97);
-      border: 1px solid #334155;
-      border-left: 4px solid #06b6d4;
-      border-radius: 12px;
-      padding: 13px 15px;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.15s;
-      backdrop-filter: blur(8px);
-      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-    }
-    #tip h3 { font-size: 0.82rem; font-weight: 700; color: #67e8f9;
-      margin-bottom: 7px; padding-bottom: 7px; border-bottom: 1px solid #1e293b; line-height: 1.3; }
-    #tip p { font-size: 0.75rem; color: #94a3b8; line-height: 1.6; direction: rtl; }
-    #tip .rotate-hint { font-size: 0.68rem; color: #22d3ee; margin-top: 6px;
-      padding-top: 6px; border-top: 1px solid #1e293b; }
-
-    .hs { cursor: help; }
-    .hs .hr { opacity: 0; transition: opacity 0.2s; }
-    .hs:hover .hr { opacity: 1; }
-
-    /* Rotatable dials */
-    .rdial { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath fill='%2306b6d4' d='M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8zm1-13H9v2h3V5zm0 4H9v2h3V9zm2.5 2.5a2.5 2.5 0 1 0-5 0 2.5 2.5 0 0 0 5 0z'/%3E%3C/svg%3E") 12 12, crosshair; }
-    .rdial:hover .rdial-ring { opacity: 0.7 !important; }
-
-    footer {
-      border-top: 1px solid #1e293b;
-      background: rgba(15,23,42,0.8);
-      padding: 9px; text-align: center;
-      font-size: 0.72rem; color: #64748b; z-index: 20;
-    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:#0d1520;overflow:hidden;font-family:'Segoe UI',sans-serif;color:#e2e8f0}
+    canvas{display:block}
+    #ui{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;
+        align-items:flex-start;padding:16px 20px;pointer-events:none;z-index:10}
+    #ui>*{pointer-events:auto}
+    h1{font-size:1.3rem;font-weight:800;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.6)}
+    .sub{font-size:.72rem;color:#475569;margin-top:4px}
+    .btns{display:flex;gap:8px;align-items:center}
+    .btn{background:rgba(15,23,42,.88);border:1px solid #334155;color:#e2e8f0;
+         padding:7px 14px;border-radius:8px;cursor:pointer;font-size:.78rem;
+         backdrop-filter:blur(8px);transition:background .15s}
+    .btn:hover{background:rgba(51,65,85,.9)}
+    .btn.active{background:rgba(6,182,212,.2);border-color:#06b6d4;color:#67e8f9}
+    #tip{position:fixed;z-index:20;width:265px;background:rgba(10,15,28,.96);
+         border:1px solid #334155;border-left:3px solid #06b6d4;border-radius:10px;
+         padding:11px 14px;pointer-events:none;opacity:0;transition:opacity .15s;
+         backdrop-filter:blur(8px);box-shadow:0 20px 50px rgba(0,0,0,.6)}
+    #tip h3{color:#67e8f9;font-size:.82rem;margin-bottom:6px;padding-bottom:6px;
+            border-bottom:1px solid #1e293b}
+    #tip p{color:#94a3b8;font-size:.75rem;line-height:1.55;direction:rtl}
+    #footer{position:fixed;bottom:0;left:0;right:0;text-align:center;padding:9px;
+            font-size:.7rem;color:#334155;background:rgba(13,21,32,.7);
+            border-top:1px solid #1e293b;backdrop-filter:blur(4px)}
+    #loading{position:fixed;inset:0;background:#0d1520;display:flex;flex-direction:column;
+             align-items:center;justify-content:center;z-index:100;transition:opacity .6s}
+    .spin{width:44px;height:44px;border:3px solid #1e293b;border-top-color:#06b6d4;
+          border-radius:50%;animation:sp .8s linear infinite;margin-bottom:14px}
+    @keyframes sp{to{transform:rotate(360deg)}}
+    #loading p{color:#475569;font-size:.8rem}
   </style>
 </head>
 <body>
+<div id="loading"><div class="spin"></div><p>טוען מודל תלת-ממד…</p></div>
 
-<div id="tip">
-  <h3 id="tip-title"></h3>
-  <p id="tip-desc"></p>
-  <p class="rotate-hint" id="tip-rotate" style="display:none">↺ גרור כדי לסובב את החוגה</p>
-</div>
-
-<header>
+<div id="ui">
   <div>
-    <h1>👁 פורופטר VT-5C — סימולטור אינטראקטיבי</h1>
-    <p class="subtitle">גרור רקע לסיבוב מבנה • גרור חוגה/עדשה לסיבובה • רחף לפרטים</p>
+    <h1>👁 פורופטר VT-5C — מודל תלת-ממד</h1>
+    <p class="sub">גרור לסיבוב 360° • גלגל לזום • רחף מעל רכיב לפרטים</p>
   </div>
-  <div class="hdr-btns">
-    <button class="hdr-btn" id="reset-rx-btn">↺ אפס מרשם</button>
-    <button class="hdr-btn" id="reset-btn">⟲ אפס זווית</button>
-  </div>
-</header>
-
-<!-- Prescription readout -->
-<div id="rx-panel">
-  <h4>📋 מרשם נוכחי</h4>
-  <div class="rx-labels">
-    <span class="rx-lbl">SPH</span>
-    <span class="rx-lbl">CYL</span>
-    <span class="rx-lbl">Axis</span>
-  </div>
-  <div class="rx-row">
-    <span class="rx-eye">OD</span>
-    <span class="rx-cell rx-sph" id="rx-sph-R">+0.00</span>
-    <span class="rx-cell rx-cyl" id="rx-cyl-R">−0.00</span>
-    <span class="rx-cell rx-ax"  id="rx-ax-R">000°</span>
-  </div>
-  <div class="rx-row">
-    <span class="rx-eye">OS</span>
-    <span class="rx-cell rx-sph" id="rx-sph-L">+0.00</span>
-    <span class="rx-cell rx-cyl" id="rx-cyl-L">−0.00</span>
-    <span class="rx-cell rx-ax"  id="rx-ax-L">000°</span>
+  <div class="btns">
+    <button class="btn" id="bFront">⬜ חזית</button>
+    <button class="btn" id="bSide">◧ צד</button>
+    <button class="btn" id="bTop">⬆ עליון</button>
+    <button class="btn" id="bIso">⟲ איזומטרי</button>
+    <button class="btn" id="bAuto">▶ סיבוב אוטומטי</button>
   </div>
 </div>
 
-<div id="scene">
-  <div id="grid"></div>
-  <div id="wrap">
+<div id="tip"><h3 id="tTitle"></h3><p id="tDesc"></p></div>
+<div id="footer">גרור לסיבוב מלא 360° בכל הכיוונים • גלגל לזום • רחף מעל חלקי המכשיר ללמוד על תפקידם</div>
 
-<svg id="phoropter-svg" width="740" height="590" viewBox="0 0 740 590" xmlns="http://www.w3.org/2000/svg">
-<defs>
-  <linearGradient id="sg1" x1="0%" y1="0%" x2="0%" y2="100%">
-    <stop offset="0%" stop-color="#f2f2f2"/><stop offset="25%" stop-color="#d8d8d8"/>
-    <stop offset="65%" stop-color="#a0a0a0"/><stop offset="100%" stop-color="#686868"/>
-  </linearGradient>
-  <linearGradient id="sg2" x1="0%" y1="0%" x2="100%" y2="0%">
-    <stop offset="0%" stop-color="#b8b8b8"/><stop offset="35%" stop-color="#ebebeb"/>
-    <stop offset="65%" stop-color="#b0b0b0"/><stop offset="100%" stop-color="#787878"/>
-  </linearGradient>
-  <radialGradient id="knob" cx="32%" cy="28%" r="68%">
-    <stop offset="0%" stop-color="#f8f8f8"/><stop offset="35%" stop-color="#d0d0d0"/>
-    <stop offset="75%" stop-color="#909090"/><stop offset="100%" stop-color="#505050"/>
-  </radialGradient>
-  <radialGradient id="knobSm" cx="32%" cy="28%" r="68%">
-    <stop offset="0%" stop-color="#ffffff"/><stop offset="45%" stop-color="#cccccc"/>
-    <stop offset="100%" stop-color="#686868"/>
-  </radialGradient>
-  <radialGradient id="housing" cx="28%" cy="22%" r="78%">
-    <stop offset="0%" stop-color="#c8c8c8"/><stop offset="45%" stop-color="#989898"/>
-    <stop offset="100%" stop-color="#484848"/>
-  </radialGradient>
-  <radialGradient id="outerRing" cx="30%" cy="25%" r="70%">
-    <stop offset="0%" stop-color="#efefef"/><stop offset="40%" stop-color="#d4d4d4"/>
-    <stop offset="80%" stop-color="#a8a8a8"/><stop offset="100%" stop-color="#707070"/>
-  </radialGradient>
-  <radialGradient id="aperture" cx="35%" cy="30%" r="65%">
-    <stop offset="0%" stop-color="#0a1828"/><stop offset="55%" stop-color="#060e18"/>
-    <stop offset="100%" stop-color="#010308"/>
-  </radialGradient>
-  <radialGradient id="lensRef" cx="38%" cy="32%" r="60%">
-    <stop offset="0%" stop-color="#1e40af" stop-opacity="0.5"/>
-    <stop offset="100%" stop-color="#000" stop-opacity="0.0"/>
-  </radialGradient>
-  <filter id="ds" x="-20%" y="-20%" width="140%" height="140%">
-    <feDropShadow dx="2" dy="4" stdDeviation="7" flood-color="#000" flood-opacity="0.55"/>
-  </filter>
-  <filter id="ds2" x="-30%" y="-30%" width="160%" height="160%">
-    <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000" flood-opacity="0.7"/>
-  </filter>
-</defs>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
-<!-- ══════════ MOUNTING TOP ══════════ -->
-<rect x="348" y="18" width="44" height="92" rx="6" fill="url(#sg2)" stroke="#909090" stroke-width="1.2"/>
-<rect x="354" y="18" width="8" height="92" rx="3" fill="rgba(255,255,255,0.18)"/>
+// ── RENDERER ──────────────────────────────────────
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
 
-<g class="hs" data-part="rotatingKnob">
-  <rect x="295" y="14" width="150" height="40" rx="10" fill="url(#sg1)" stroke="#aaa" stroke-width="1.5" filter="url(#ds2)"/>
-  <circle cx="321" cy="15" r="13" fill="url(#knob)" stroke="#bbb" stroke-width="1.2" filter="url(#ds2)"/>
-  <circle cx="321" cy="15" r="7" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.7"/>
-  <circle cx="321" cy="15" r="3" fill="#888"/>
-  <circle cx="419" cy="15" r="13" fill="url(#knob)" stroke="#bbb" stroke-width="1.2" filter="url(#ds2)"/>
-  <circle cx="419" cy="15" r="7" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.7"/>
-  <circle cx="419" cy="15" r="3" fill="#888"/>
-  <rect x="293" y="12" width="154" height="44" rx="11" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-</g>
+// ── SCENE ─────────────────────────────────────────
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0d1520);
+scene.fog = new THREE.FogExp2(0x0d1520, 0.032);
 
-<g class="hs" data-part="fixingKnob">
-  <rect x="452" y="50" width="55" height="22" rx="6" fill="url(#sg1)" stroke="#aaa" stroke-width="1"/>
-  <circle cx="490" cy="45" r="16" fill="url(#knob)" stroke="#bbb" stroke-width="1.5" filter="url(#ds2)"/>
-  <circle cx="490" cy="45" r="9" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.8"/>
-  <circle cx="490" cy="45" r="4" fill="#888"/>
-  <rect x="450" y="43" width="59" height="30" rx="7" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-</g>
+// ── CAMERA ────────────────────────────────────────
+const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.1, 80);
+camera.position.set(2.5, 1.2, 6.0);
 
-<g class="hs" data-part="fixedPort">
-  <rect x="333" y="70" width="74" height="22" rx="5" fill="#282828" stroke="#555" stroke-width="1.2"/>
-  <rect x="337" y="73" width="66" height="16" rx="3" fill="#1a1a1a" stroke="#444" stroke-width="0.7"/>
-  <rect x="331" y="68" width="78" height="26" rx="6" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-</g>
+// ── ENVIRONMENT (metallic reflections) ───────────
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new THREE.RoomEnvironment(), 0.04).texture;
 
-<!-- ══════════ BRIDGE BAR ══════════ -->
-<rect x="110" y="128" width="520" height="52" rx="12" fill="url(#sg1)" stroke="#999" stroke-width="1.5" filter="url(#ds)"/>
-<rect x="114" y="132" width="512" height="10" rx="5" fill="rgba(255,255,255,0.15)"/>
+// ── LIGHTS ────────────────────────────────────────
+scene.add(new THREE.AmbientLight(0xffffff, 0.5));
 
-<g class="hs" data-part="lockingScrew">
-  <rect x="103" y="133" width="32" height="42" rx="7" fill="url(#sg2)" stroke="#aaa" stroke-width="1.2"/>
-  <circle cx="119" cy="154" r="12" fill="url(#knob)" stroke="#bbb" stroke-width="1.2"/>
-  <circle cx="119" cy="154" r="6" fill="url(#knobSm)"/>
-  <rect x="101" y="131" width="36" height="46" rx="8" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-</g>
+const sun = new THREE.DirectionalLight(0xfff5e0, 2.8);
+sun.position.set(5, 8, 6);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.camera.near = 0.5; sun.shadow.camera.far = 30;
+sun.shadow.camera.left = -8; sun.shadow.camera.right = 8;
+sun.shadow.camera.top = 8; sun.shadow.camera.bottom = -8;
+scene.add(sun);
 
-<g class="hs" data-part="horizontalKnob">
-  <circle cx="158" cy="154" r="20" fill="url(#knob)" stroke="#bbb" stroke-width="1.5" filter="url(#ds2)"/>
-  <circle cx="158" cy="154" r="12" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.8"/>
-  <line x1="145" y1="154" x2="171" y2="154" stroke="#888" stroke-width="1.2"/>
-  <line x1="158" y1="141" x2="158" y2="167" stroke="#888" stroke-width="1.2"/>
-  <circle cx="158" cy="154" r="5" fill="#848484"/>
-  <circle cx="158" cy="154" r="22" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-</g>
+const fill = new THREE.DirectionalLight(0x8899cc, 0.7);
+fill.position.set(-5, 2, -4); scene.add(fill);
 
-<g class="hs" data-part="pdWindow">
-  <rect x="215" y="136" width="48" height="26" rx="4" fill="white" stroke="#909090" stroke-width="1.5"/>
-  <rect x="217" y="138" width="44" height="22" rx="3" fill="#f5faff"/>
-  <text x="239" y="153" font-family="'Courier New',monospace" font-size="11" font-weight="bold" fill="#111" text-anchor="middle">64</text>
-  <rect x="213" y="134" width="52" height="30" rx="5" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-</g>
+const rim = new THREE.DirectionalLight(0xaaccff, 0.4);
+rim.position.set(0, -4, -5); scene.add(rim);
 
-<g class="hs" data-part="pdKnob">
-  <circle cx="282" cy="128" r="20" fill="url(#knob)" stroke="#bbb" stroke-width="1.5" filter="url(#ds2)"/>
-  <circle cx="282" cy="128" r="12" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.8"/>
-  <circle cx="282" cy="128" r="5" fill="#888"/>
-  <circle cx="282" cy="128" r="22" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-</g>
+scene.add(Object.assign(new THREE.PointLight(0xffffff, 0.6, 18), { position: new THREE.Vector3(0, 5, 3) }));
 
-<g class="hs" data-part="pdKnob">
-  <circle cx="458" cy="128" r="20" fill="url(#knob)" stroke="#bbb" stroke-width="1.5" filter="url(#ds2)"/>
-  <circle cx="458" cy="128" r="12" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.8"/>
-  <circle cx="458" cy="128" r="5" fill="#888"/>
-  <circle cx="458" cy="128" r="22" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-</g>
+// ── CONTROLS ──────────────────────────────────────
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.055;
+controls.minDistance = 2.2;
+controls.maxDistance = 18;
+controls.target.set(0, 0.1, 0);
+controls.update();
 
-<g class="hs" data-part="horizontalBubble">
-  <rect x="455" y="137" width="56" height="24" rx="4" fill="#0f2a0f" stroke="#2d5a2d" stroke-width="1.5"/>
-  <rect x="460" y="143" width="46" height="12" rx="6" fill="#1a4a1a" stroke="#287028" stroke-width="0.7"/>
-  <ellipse cx="483" cy="149" rx="10" ry="5" fill="#5af05a" opacity="0.75"/>
-  <ellipse cx="481" cy="147" rx="5" ry="2.5" fill="#9aff9a" opacity="0.5"/>
-  <line x1="480" y1="140" x2="480" y2="162" stroke="#1a5a1a" stroke-width="0.8"/>
-  <line x1="486" y1="140" x2="486" y2="162" stroke="#1a5a1a" stroke-width="0.8"/>
-  <rect x="453" y="135" width="60" height="28" rx="5" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-</g>
-
-<g class="hs" data-part="horizontalKnob">
-  <circle cx="578" cy="154" r="20" fill="url(#knob)" stroke="#bbb" stroke-width="1.5" filter="url(#ds2)"/>
-  <circle cx="578" cy="154" r="12" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.8"/>
-  <line x1="565" y1="154" x2="591" y2="154" stroke="#888" stroke-width="1.2"/>
-  <line x1="578" y1="141" x2="578" y2="167" stroke="#888" stroke-width="1.2"/>
-  <circle cx="578" cy="154" r="5" fill="#848484"/>
-  <circle cx="578" cy="154" r="22" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-</g>
-
-<g class="hs" data-part="auxLensKnob">
-  <circle cx="618" cy="154" r="17" fill="url(#knob)" stroke="#bbb" stroke-width="1.5" filter="url(#ds2)"/>
-  <circle cx="618" cy="154" r="9" fill="url(#knobSm)"/>
-  <text x="618" y="140" font-family="monospace" font-size="7" fill="#ccc" text-anchor="middle">A</text>
-  <text x="632" y="157" font-family="monospace" font-size="7" fill="#ccc" text-anchor="middle">B</text>
-  <text x="618" y="170" font-family="monospace" font-size="7" fill="#ccc" text-anchor="middle">C</text>
-  <circle cx="618" cy="154" r="19" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-</g>
-
-<!-- Struts -->
-<path d="M 185 178 C 185 210 185 225 185 248" stroke="url(#sg2)" stroke-width="22" stroke-linecap="round" fill="none"/>
-<path d="M 555 178 C 555 210 555 225 555 248" stroke="url(#sg2)" stroke-width="22" stroke-linecap="round" fill="none"/>
-
-<!-- ══════════════════════════════════════════════
-     LEFT EYE (OS)
-══════════════════════════════════════════════ -->
-
-<!-- Drop shadow -->
-<circle cx="195" cy="357" r="135" fill="#303030" filter="url(#ds)"/>
-
-<!-- ── ROTATABLE: SPH ring LEFT ── -->
-<!-- (Housing drawn on top at r=108 masks the inner part → only band 108-130 visible) -->
-<g id="sph-ring-L" class="rdial hs" data-part="sphericalDisk" data-rotdial="sph-ring-L">
-  <!-- Outer border ring -->
-  <circle cx="195" cy="355" r="133" fill="#484848" stroke="#383838" stroke-width="1"/>
-  <!-- Silver ring surface -->
-  <circle cx="195" cy="355" r="130" fill="url(#outerRing)" stroke="#c8c8c8" stroke-width="1.5"/>
-  <!-- Ticks and numbers generated by JS below -->
-  <g id="sph-ticks-L"></g>
-  <!-- Glow ring on hover -->
-  <circle cx="195" cy="355" r="131" fill="none" stroke="#06b6d4" stroke-width="3" opacity="0" class="rdial-ring"/>
-</g>
-
-<!-- Housing body (masks inner part of SPH ring) -->
-<circle cx="195" cy="355" r="108" fill="url(#housing)" stroke="#909090" stroke-width="1.5"/>
-<path d="M 122 297 A 88 88 0 0 1 268 297" stroke="rgba(255,255,255,0.14)" stroke-width="8" fill="none" stroke-linecap="round"/>
-
-<!-- ── ROTATABLE: CYL Axis ring LEFT ── -->
-<g id="cax-ring-L" class="rdial hs" data-part="cylAxisDial" data-rotdial="cax-ring-L">
-  <circle cx="195" cy="355" r="88" fill="#d0d0d0" stroke="#b0b0b0" stroke-width="1.5"/>
-  <circle cx="195" cy="355" r="76" fill="#6a6a6a" stroke="#555" stroke-width="1.2"/>
-  <!-- Axis ticks and numbers generated by JS -->
-  <g id="cax-ticks-L"></g>
-  <!-- Hover -->
-  <circle cx="195" cy="355" r="89" fill="none" stroke="#06b6d4" stroke-width="3" opacity="0" class="rdial-ring"/>
-</g>
-
-<!-- Fixed axis indicator (red line at top, stays still) -->
-<line x1="195" y1="266" x2="195" y2="280" stroke="#ff4040" stroke-width="3" stroke-linecap="round"/>
-<circle cx="195" cy="264" r="3.5" fill="#ff4040"/>
-
-<!-- Dark inner ring (masks inner of axis ring) -->
-<circle cx="195" cy="355" r="74" fill="#202020" stroke="#3a3a3a" stroke-width="1.5"/>
-
-<!-- Aperture -->
-<g class="hs" data-part="aperture">
-  <circle cx="195" cy="355" r="57" fill="url(#aperture)"/>
-  <ellipse cx="176" cy="336" rx="20" ry="13" fill="url(#lensRef)" transform="rotate(-20 176 336)"/>
-  <circle cx="195" cy="355" r="57" fill="none" stroke="#1e1e1e" stroke-width="2.5"/>
-  <line x1="170" y1="355" x2="220" y2="355" stroke="#0d2d0d" stroke-width="0.6" opacity="0.6"/>
-  <line x1="195" y1="330" x2="195" y2="380" stroke="#0d2d0d" stroke-width="0.6" opacity="0.6"/>
-  <circle cx="195" cy="355" r="58" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-</g>
-
-<!-- Auxiliary Lens Dial LEFT -->
-<g class="rdial hs" data-part="auxLensDial" data-rotdial="aux-L">
-  <line x1="215" y1="272" x2="278" y2="298" stroke="url(#sg1)" stroke-width="8" stroke-linecap="round"/>
-  <g id="aux-L-body">
-    <circle cx="294" cy="292" r="37" fill="url(#outerRing)" stroke="#b0b0b0" stroke-width="2" filter="url(#ds2)"/>
-    <circle cx="294" cy="292" r="30" fill="#b8b8b8" stroke="#aaa" stroke-width="1.2"/>
-    <circle cx="294" cy="292" r="17" fill="url(#aperture)"/>
-    <line x1="294" y1="262" x2="294" y2="268" stroke="#444" stroke-width="1.5"/>
-    <line x1="294" y1="316" x2="294" y2="322" stroke="#444" stroke-width="1.5"/>
-    <line x1="264" y1="292" x2="270" y2="292" stroke="#444" stroke-width="1.5"/>
-    <line x1="318" y1="292" x2="324" y2="292" stroke="#444" stroke-width="1.5"/>
-  </g>
-  <line x1="294" y1="255" x2="292" y2="232" stroke="url(#sg1)" stroke-width="6" stroke-linecap="round"/>
-  <circle cx="292" cy="226" r="10" fill="url(#knob)" stroke="#bbb" stroke-width="1.2"/>
-  <circle cx="294" cy="292" r="39" fill="none" stroke="#06b6d4" stroke-width="2.5" opacity="0" class="rdial-ring"/>
-</g>
-
-<!-- Aux lens knob (left housing side) -->
-<g class="hs" data-part="auxLensKnob">
-  <circle cx="112" cy="262" r="24" fill="url(#knob)" stroke="#bbb" stroke-width="1.8" filter="url(#ds2)"/>
-  <circle cx="112" cy="262" r="15" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.8"/>
-  <circle cx="112" cy="262" r="6" fill="#888"/>
-  <circle cx="112" cy="262" r="26" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-</g>
-
-<!-- SPH display (left) -->
-<g class="hs" data-part="sphWindow">
-  <rect x="72" y="346" width="52" height="24" rx="4" fill="white" stroke="#909090" stroke-width="1.5"/>
-  <rect x="74" y="348" width="48" height="20" rx="3" fill="#f8f8f8"/>
-  <text id="sph-disp-L" x="98" y="362" font-family="'Courier New',monospace" font-size="9.5" font-weight="bold" fill="#cc0000" text-anchor="middle">+0.00</text>
-  <rect x="70" y="344" width="56" height="28" rx="5" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-</g>
-
-<!-- Prism knob left -->
-<g class="hs" data-part="prismKnob">
-  <circle cx="256" cy="355" r="22" fill="url(#knob)" stroke="#bbb" stroke-width="1.5" filter="url(#ds2)"/>
-  <circle cx="256" cy="355" r="13" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.8"/>
-  <text x="256" y="360" font-family="sans-serif" font-size="9" fill="#555" text-anchor="middle">Δ</text>
-  <circle cx="256" cy="355" r="24" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-</g>
-
-<!-- ── ROTATABLE: CYL knob LEFT ── -->
-<g id="cyl-knob-L" class="rdial hs" data-part="cylKnob" data-rotdial="cyl-knob-L">
-  <circle cx="195" cy="490" r="30" fill="url(#knob)" stroke="#bbb" stroke-width="2" filter="url(#ds2)"/>
-  <circle cx="195" cy="490" r="20" fill="url(#knobSm)" stroke="#ccc" stroke-width="1"/>
-  <circle cx="195" cy="490" r="8" fill="#9a9a9a" stroke="#aaa" stroke-width="0.6"/>
-  <!-- Knurling notches (rotate with knob) -->
-  <g id="cyl-notches-L">
-    <line x1="195" y1="461" x2="195" y2="467" stroke="#aaa" stroke-width="2"/>
-    <line x1="216" y1="468" x2="211" y2="473" stroke="#aaa" stroke-width="2"/>
-    <line x1="222" y1="490" x2="216" y2="490" stroke="#aaa" stroke-width="2"/>
-    <line x1="216" y1="512" x2="211" y2="507" stroke="#aaa" stroke-width="2"/>
-    <line x1="174" y1="468" x2="179" y2="473" stroke="#aaa" stroke-width="2"/>
-    <line x1="168" y1="490" x2="174" y2="490" stroke="#aaa" stroke-width="2"/>
-    <line x1="174" y1="512" x2="179" y2="507" stroke="#aaa" stroke-width="2"/>
-  </g>
-  <circle cx="195" cy="490" r="32" fill="none" stroke="#06b6d4" stroke-width="2.5" opacity="0" class="rdial-ring"/>
-</g>
-
-<!-- CYL value display left -->
-<g class="hs" data-part="cylKnob">
-  <rect x="138" y="485" width="44" height="20" rx="3" fill="#e8e8e8" stroke="#909090" stroke-width="1.2"/>
-  <text id="cyl-disp-L" x="160" y="499" font-family="'Courier New',monospace" font-size="9" font-weight="bold" fill="#880000" text-anchor="middle">−0.00</text>
-  <rect x="136" y="483" width="48" height="24" rx="4" fill="none" stroke="#06b6d4" stroke-width="2" class="hr"/>
-</g>
-
-<!-- Axis display window left -->
-<g class="hs" data-part="cylAxisDisplay">
-  <rect x="86" y="416" width="54" height="22" rx="4" fill="#e8e8e8" stroke="#909090" stroke-width="1.5"/>
-  <text id="cax-disp-L" x="113" y="430" font-family="'Courier New',monospace" font-size="10" font-weight="bold" fill="#222" text-anchor="middle">000°</text>
-  <rect x="84" y="414" width="58" height="26" rx="5" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-</g>
-
-
-<!-- ══════════════════════════════════════════════
-     RIGHT EYE (OD)
-══════════════════════════════════════════════ -->
-
-<circle cx="545" cy="357" r="135" fill="#303030" filter="url(#ds)"/>
-
-<!-- ── ROTATABLE: SPH ring RIGHT ── -->
-<g id="sph-ring-R" class="rdial hs" data-part="sphericalDisk" data-rotdial="sph-ring-R">
-  <circle cx="545" cy="355" r="133" fill="#484848" stroke="#383838" stroke-width="1"/>
-  <circle cx="545" cy="355" r="130" fill="url(#outerRing)" stroke="#c8c8c8" stroke-width="1.5"/>
-  <g id="sph-ticks-R"></g>
-  <circle cx="545" cy="355" r="131" fill="none" stroke="#06b6d4" stroke-width="3" opacity="0" class="rdial-ring"/>
-</g>
-
-<circle cx="545" cy="355" r="108" fill="url(#housing)" stroke="#909090" stroke-width="1.5"/>
-<path d="M 472 297 A 88 88 0 0 1 618 297" stroke="rgba(255,255,255,0.14)" stroke-width="8" fill="none" stroke-linecap="round"/>
-
-<!-- ── ROTATABLE: CYL Axis ring RIGHT ── -->
-<g id="cax-ring-R" class="rdial hs" data-part="cylAxisDial" data-rotdial="cax-ring-R">
-  <circle cx="545" cy="355" r="88" fill="#d0d0d0" stroke="#b0b0b0" stroke-width="1.5"/>
-  <circle cx="545" cy="355" r="76" fill="#6a6a6a" stroke="#555" stroke-width="1.2"/>
-  <g id="cax-ticks-R"></g>
-  <circle cx="545" cy="355" r="89" fill="none" stroke="#06b6d4" stroke-width="3" opacity="0" class="rdial-ring"/>
-</g>
-
-<line x1="545" y1="266" x2="545" y2="280" stroke="#ff4040" stroke-width="3" stroke-linecap="round"/>
-<circle cx="545" cy="264" r="3.5" fill="#ff4040"/>
-
-<circle cx="545" cy="355" r="74" fill="#202020" stroke="#3a3a3a" stroke-width="1.5"/>
-
-<g class="hs" data-part="aperture">
-  <circle cx="545" cy="355" r="57" fill="url(#aperture)"/>
-  <ellipse cx="526" cy="336" rx="20" ry="13" fill="url(#lensRef)" transform="rotate(-20 526 336)"/>
-  <circle cx="545" cy="355" r="57" fill="none" stroke="#1e1e1e" stroke-width="2.5"/>
-  <line x1="520" y1="355" x2="570" y2="355" stroke="#0d2d0d" stroke-width="0.6" opacity="0.6"/>
-  <line x1="545" y1="330" x2="545" y2="380" stroke="#0d2d0d" stroke-width="0.6" opacity="0.6"/>
-  <circle cx="545" cy="355" r="58" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-</g>
-
-<!-- Auxiliary Lens Dial RIGHT -->
-<g class="rdial hs" data-part="auxLensDial" data-rotdial="aux-R">
-  <line x1="525" y1="272" x2="462" y2="298" stroke="url(#sg1)" stroke-width="8" stroke-linecap="round"/>
-  <g id="aux-R-body">
-    <circle cx="446" cy="292" r="37" fill="url(#outerRing)" stroke="#b0b0b0" stroke-width="2" filter="url(#ds2)"/>
-    <circle cx="446" cy="292" r="30" fill="#b8b8b8" stroke="#aaa" stroke-width="1.2"/>
-    <circle cx="446" cy="292" r="17" fill="url(#aperture)"/>
-    <line x1="446" y1="262" x2="446" y2="268" stroke="#444" stroke-width="1.5"/>
-    <line x1="446" y1="316" x2="446" y2="322" stroke="#444" stroke-width="1.5"/>
-    <line x1="416" y1="292" x2="422" y2="292" stroke="#444" stroke-width="1.5"/>
-    <line x1="470" y1="292" x2="476" y2="292" stroke="#444" stroke-width="1.5"/>
-  </g>
-  <line x1="446" y1="255" x2="448" y2="232" stroke="url(#sg1)" stroke-width="6" stroke-linecap="round"/>
-  <circle cx="448" cy="226" r="10" fill="url(#knob)" stroke="#bbb" stroke-width="1.2"/>
-  <circle cx="446" cy="292" r="39" fill="none" stroke="#06b6d4" stroke-width="2.5" opacity="0" class="rdial-ring"/>
-</g>
-
-<g class="hs" data-part="auxLensKnob">
-  <circle cx="628" cy="262" r="24" fill="url(#knob)" stroke="#bbb" stroke-width="1.8" filter="url(#ds2)"/>
-  <circle cx="628" cy="262" r="15" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.8"/>
-  <circle cx="628" cy="262" r="6" fill="#888"/>
-  <circle cx="628" cy="262" r="26" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-</g>
-
-<!-- SPH display (right) -->
-<g class="hs" data-part="sphWindow">
-  <rect x="616" y="346" width="52" height="24" rx="4" fill="white" stroke="#909090" stroke-width="1.5"/>
-  <rect x="618" y="348" width="48" height="20" rx="3" fill="#f8f8f8"/>
-  <text id="sph-disp-R" x="642" y="362" font-family="'Courier New',monospace" font-size="9.5" font-weight="bold" fill="#000" text-anchor="middle">+0.00</text>
-  <rect x="614" y="344" width="56" height="28" rx="5" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-</g>
-
-<g class="hs" data-part="prismKnob">
-  <circle cx="484" cy="355" r="22" fill="url(#knob)" stroke="#bbb" stroke-width="1.5" filter="url(#ds2)"/>
-  <circle cx="484" cy="355" r="13" fill="url(#knobSm)" stroke="#ccc" stroke-width="0.8"/>
-  <text x="484" y="360" font-family="sans-serif" font-size="9" fill="#555" text-anchor="middle">Δ</text>
-  <circle cx="484" cy="355" r="24" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-</g>
-
-<!-- ── ROTATABLE: CYL knob RIGHT ── -->
-<g id="cyl-knob-R" class="rdial hs" data-part="cylKnob" data-rotdial="cyl-knob-R">
-  <circle cx="545" cy="490" r="30" fill="url(#knob)" stroke="#bbb" stroke-width="2" filter="url(#ds2)"/>
-  <circle cx="545" cy="490" r="20" fill="url(#knobSm)" stroke="#ccc" stroke-width="1"/>
-  <circle cx="545" cy="490" r="8" fill="#9a9a9a" stroke="#aaa" stroke-width="0.6"/>
-  <g id="cyl-notches-R">
-    <line x1="545" y1="461" x2="545" y2="467" stroke="#aaa" stroke-width="2"/>
-    <line x1="566" y1="468" x2="561" y2="473" stroke="#aaa" stroke-width="2"/>
-    <line x1="572" y1="490" x2="566" y2="490" stroke="#aaa" stroke-width="2"/>
-    <line x1="566" y1="512" x2="561" y2="507" stroke="#aaa" stroke-width="2"/>
-    <line x1="524" y1="468" x2="529" y2="473" stroke="#aaa" stroke-width="2"/>
-    <line x1="518" y1="490" x2="524" y2="490" stroke="#aaa" stroke-width="2"/>
-    <line x1="524" y1="512" x2="529" y2="507" stroke="#aaa" stroke-width="2"/>
-  </g>
-  <circle cx="545" cy="490" r="32" fill="none" stroke="#06b6d4" stroke-width="2.5" opacity="0" class="rdial-ring"/>
-</g>
-
-<!-- CYL display right -->
-<g class="hs" data-part="cylKnob">
-  <rect x="558" y="485" width="44" height="20" rx="3" fill="#e8e8e8" stroke="#909090" stroke-width="1.2"/>
-  <text id="cyl-disp-R" x="580" y="499" font-family="'Courier New',monospace" font-size="9" font-weight="bold" fill="#880000" text-anchor="middle">−0.00</text>
-  <rect x="556" y="483" width="48" height="24" rx="4" fill="none" stroke="#06b6d4" stroke-width="2" class="hr"/>
-</g>
-
-<!-- Axis display right -->
-<g class="hs" data-part="cylAxisDisplay">
-  <rect x="600" y="416" width="54" height="22" rx="4" fill="#e8e8e8" stroke="#909090" stroke-width="1.5"/>
-  <text id="cax-disp-R" x="627" y="430" font-family="'Courier New',monospace" font-size="10" font-weight="bold" fill="#222" text-anchor="middle">000°</text>
-  <rect x="598" y="414" width="58" height="26" rx="5" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-</g>
-
-<!-- Forehead adjustment -->
-<g class="hs" data-part="foreheadAdjust">
-  <rect x="325" y="516" width="90" height="20" rx="5" fill="url(#sg1)" stroke="#aaa" stroke-width="1.2"/>
-  <circle cx="370" cy="511" r="17" fill="url(#knob)" stroke="#bbb" stroke-width="1.5" filter="url(#ds2)"/>
-  <circle cx="370" cy="511" r="10" fill="url(#knobSm)"/>
-  <circle cx="370" cy="511" r="19" fill="none" stroke="#06b6d4" stroke-width="2.5" class="hr"/>
-</g>
-
-</svg>
-  </div><!-- /wrap -->
-</div><!-- /scene -->
-
-<footer>
-  גרור את <strong>הרקע</strong> לסיבוב 3D כללי &nbsp;•&nbsp;
-  גרור את <strong>טבעת ה-SPH</strong> (כסוף חיצוני) לשינוי ספירה &nbsp;•&nbsp;
-  גרור את <strong>טבעת הציר</strong> (כסוף פנימי) לשינוי ציר אסטיגמציה &nbsp;•&nbsp;
-  גרור את <strong>כפתור ה-CYL</strong> (תחתון) לשינוי צילינדר
-</footer>
-
-<script>
-// ══════════════════════════════════════════
-// PARTS DATA (tooltip content)
-// ══════════════════════════════════════════
-const PARTS = {
-  rotatingKnob: { title: "Rotating Adjusting Knob — כפתורי כיוון מסתובב", desc: "שני הכפתורים בחלק העליון מאפשרים לכוון את זווית ההטיה של הפורופטר. לאחר קיבוע הגובה הנכון יש להדק את הנעילה.", color:"#0ea5e9" },
-  fixingKnob: { title: "Fixing Knob — כפתור נעילה", desc: "מנעל את הפורופטר בגובה ובזווית הרצויים לאורך עמוד הנשיאה.", color:"#3b82f6" },
-  fixedPort: { title: "Fixed Insertion Port — נקודת חיבור קבועה", desc: "חיבור סטנדרטי לעמוד הנשיאה של כיסא הבדיקה.", color:"#94a3b8" },
-  lockingScrew: { title: "Locking Screw — בורג נעילת מוט קרוב-ראייה", desc: "מנעל את זרוע מוט הקרוב-ראייה (near point rod). הזרוע משמשת לבדיקות אקומודציה וקונברגנציה בטווח קרוב.", color:"#9ca3af" },
-  horizontalKnob: { title: "Horizontal Adjusting Knob — כפתור כיוון אופקי", desc: "מאפשר הזזה אופקית של הפורופטר ימינה ושמאלה לכיוון מדויק מול האישונים.", color:"#22d3ee" },
-  pdWindow: { title: "Pupil Distance Display — חלון מרחק אישונים", desc: "מציג את מרחק האישונים (PD) שנקבע. ערך 64 מ\"מ הוא ממוצע מבוגרים. חשוב לכוון לכל עין בנפרד לדיוק מרשם.", color:"#60a5fa" },
-  pdKnob: { title: "Pupil Distance Knob — כפתור PD", desc: "מסובב את מנגנון ה-PD לאפשר הזזת העדשות לפי מרחק האישונים האמיתי. אי-כיוון גורם לפריזמה לא-מכוונת.", color:"#818cf8" },
-  horizontalBubble: { title: "Horizontal Bubble — בועת פילוס אופקית", desc: "קריטי: הפורופטר חייב להיות מפולס לחלוטין. הטיה של 2-3° תגרום לשגיאות מדידת ציר אסטיגמציה.", color:"#10b981" },
-  auxLensKnob: { title: "Auxiliary Lens Knob — כפתור עדשות עזר", desc: "בוחר עדשת עזר מיוחדת: OC (כיסוי עין), PL (פלנו שקוף), PH (פינהול), R (פריזמה), וכו'.", color:"#c084fc" },
-  auxLensDial: { title: "Auxiliary Lens Dial — חוגת עדשות עזר ↺", desc: "חוגה סיבובית המכילה עד 12 עדשות עזר שונות. כוללת JCC (ג'קסון קרוס-צילינדר) לכיוון ציר אסטיגמציה, פינהול, פריזמות ועוד.", color:"#a78bfa", rotatable: true },
-  sphericalDisk: { title: "Spherical Disk — חוגת ה-SPH הראשית ↺", desc: "הטבעת הגדולה ביותר. מכילה עדשות ספיריות בטווח −20 עד +20 דיופטר בצעדים של 0.25Δ.", color:"#fb923c", rotatable: true },
-  sphWindow: { title: "Sphere Display — חלון ערך ספירה", desc: "מציג ספירה נוכחית. אדום=קוצר ראייה (מיופיה), שחור=רוחק ראייה (היפרמטרופיה).", color:"#fbbf24" },
-  cylAxisDial: { title: "Cylinder Axis Dial — חוגת ציר צילינדר ↺", desc: "הטבעת האמצעית הכסופה. מסמנת ציר הצילינדר לתיקון אסטיגמציה (0°-180°). הקו האדום הוא הסמן הקבוע.", color:"#fb7185", rotatable: true },
-  cylKnob: { title: "Cylinder Diopter Knob — כפתור צילינדר ↺", desc: "כפתור הצילינדר התחתון. מכוון עוצמת הצילינדר (0 עד −6 דיופטר). ה-knurling מאפשר סיבוב מדויק גם בחושך.", color:"#f87171", rotatable: true },
-  cylAxisDisplay: { title: "Cylinder Axis Display — תצוגת ציר", desc: "חלון קריאה מהירה לציר הצילינדר הנוכחי. 090°=ציר אנכי, 180°=ציר אופקי.", color:"#f472b6" },
-  prismKnob: { title: "Prism Knob — כפתור פריזמה (Δ)", desc: "פריזמות (פריזם-דיופטר Δ) משמשות לאבחון סטרביזמוס, פוריה והטיית עיניים.", color:"#6366f1" },
-  aperture: { title: "Main Viewing Aperture — פתח הראייה", desc: "הפתח האפל שדרכו המטופל מסתכל בלוח הבדיקה. קוטר ~28מ\"מ. הבהוב כחלחל = ציפוי אנטי-רפלקטיבי.", color:"#0891b2" },
-  foreheadAdjust: { title: "Forehead Distance Adjustment — מרחק קודקוד", desc: "Vertex Distance סטנדרטי = 12-14מ\"מ. שינוי של 1מ\"מ משפיע על המרשם בעדשות חזקות מעל ±4.00Δ.", color:"#9ca3af" }
+// ── MATERIALS ─────────────────────────────────────
+const M = {
+  silver:      new THREE.MeshStandardMaterial({ color:0xd6d6d6, metalness:.94, roughness:.10 }),
+  silverBrt:   new THREE.MeshStandardMaterial({ color:0xeeeeee, metalness:.90, roughness:.06 }),
+  silverMid:   new THREE.MeshStandardMaterial({ color:0xb0b0b0, metalness:.88, roughness:.18 }),
+  silverDark:  new THREE.MeshStandardMaterial({ color:0x909090, metalness:.85, roughness:.24 }),
+  housing:     new THREE.MeshStandardMaterial({ color:0x888888, metalness:.82, roughness:.22 }),
+  dark:        new THREE.MeshStandardMaterial({ color:0x1c1c1c, metalness:.45, roughness:.55 }),
+  aperture:    new THREE.MeshStandardMaterial({ color:0x020508, metalness:.05, roughness:.02 }),
+  glass:       new THREE.MeshStandardMaterial({ color:0x081830, metalness:.08, roughness:.0, transparent:true, opacity:.55 }),
+  green:       new THREE.MeshStandardMaterial({ color:0x22cc55, emissive:new THREE.Color(0x0a4420), roughness:.25 }),
+  white:       new THREE.MeshStandardMaterial({ color:0xf0f0f0, metalness:.0,  roughness:.6  }),
+  red:         new THREE.MeshStandardMaterial({ color:0xff2020, emissive:new THREE.Color(0x660000), roughness:.3 }),
 };
 
-// ══════════════════════════════════════════
-// GENERATE TICK MARKS ON DIALS (JS)
-// ══════════════════════════════════════════
-function mkEl(tag, attrs) {
-  const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
-  for (const [k,v] of Object.entries(attrs)) el.setAttribute(k, v);
-  return el;
+// ── HELPERS ───────────────────────────────────────
+function mesh(geo, mat, parent, pos=[0,0,0], rot=[0,0,0]) {
+  const m = new THREE.Mesh(geo, mat);
+  m.position.set(...pos); m.rotation.set(...rot);
+  m.castShadow = true; m.receiveShadow = true;
+  parent.add(m); return m;
 }
 
-function buildSPHTicks(groupId, cx, cy) {
-  const g = document.getElementById(groupId);
-  const innerR = 111, outerR = 127;
-  const totalTicks = 160; // 160 ticks = 40D range (0.25D each)
-  for (let i = 0; i < totalTicks; i++) {
-    const angleDeg = -90 + (i / totalTicks) * 360;
-    const rad = angleDeg * Math.PI / 180;
-    const isMajor = i % 4 === 0; // every 1D
-    const r1 = isMajor ? innerR : innerR + 4;
-    const line = mkEl('line', {
-      x1: cx + r1 * Math.cos(rad),       y1: cy + r1 * Math.sin(rad),
-      x2: cx + outerR * Math.cos(rad),   y2: cy + outerR * Math.sin(rad),
-      stroke: isMajor ? '#1a1a1a' : '#555',
-      'stroke-width': isMajor ? '1.8' : '0.8'
-    });
-    g.appendChild(line);
+function cylinderBetween(p1, p2, r, mat, parent) {
+  const dir = new THREE.Vector3().subVectors(p2, p1);
+  const len = dir.length();
+  const mid = new THREE.Vector3().addVectors(p1, p2).multiplyScalar(.5);
+  const m = mesh(new THREE.CylinderGeometry(r, r, len, 14), mat, parent);
+  m.position.copy(mid);
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir.normalize());
+  return m;
+}
+
+// Ring of small boxes (tick marks on face, in XY plane)
+function faceTicks(cx, cy, cz, r, n, h, w, d, mat, parent) {
+  const geo = new THREE.BoxGeometry(w, h, d);
+  const im = new THREE.InstancedMesh(geo, mat, n);
+  im.castShadow = false;
+  const mx = new THREE.Matrix4();
+  for (let i = 0; i < n; i++) {
+    const a = (i/n) * Math.PI * 2;
+    mx.makeRotationZ(a);
+    mx.setPosition(cx + r*Math.cos(a - Math.PI/2), cy + r*Math.sin(a - Math.PI/2), cz);
+    im.setMatrixAt(i, mx);
   }
-  // Value labels at 0, ±2, ±4, ±6, ±8, ±10
-  const labelAngles = [
-    [-90, '0'], [-18, '+4'], [54, '+8'], [126, '+12'],
-    [-162, '-4'], [126-180, '-8'] // simplified
-  ];
-  const numR = 119;
-  // 0D at top, positive goes clockwise
-  const dPerDeg = 20 / 180; // 20D per 180 degrees
-  const valuesToLabel = [0, 4, 8, 12, -4, -8];
-  valuesToLabel.forEach(v => {
-    const angleDeg = -90 + (v / 0.25) * (360 / 160);
-    const rad = angleDeg * Math.PI / 180;
-    const t = mkEl('text', {
-      x: (cx + numR * Math.cos(rad)).toFixed(1),
-      y: (cy + numR * Math.sin(rad) + 3.5).toFixed(1),
-      'font-family': 'monospace',
-      'font-size': '8',
-      'font-weight': 'bold',
-      fill: v < 0 ? '#770000' : '#111',
-      'text-anchor': 'middle',
-      transform: `rotate(${angleDeg + 90}, ${(cx + numR * Math.cos(rad)).toFixed(1)}, ${(cy + numR * Math.sin(rad)).toFixed(1)})`
-    });
-    t.textContent = v === 0 ? '0' : (v > 0 ? '+'+v : v);
-    g.appendChild(t);
-  });
+  im.instanceMatrix.needsUpdate = true;
+  parent.add(im);
 }
 
-function buildAxisTicks(groupId, cx, cy) {
-  const g = document.getElementById(groupId);
-  const innerR = 77, outerR = 86;
-  for (let i = 0; i < 180; i++) {
-    const angleDeg = -90 + i * 2; // 0-180 mapped to 0-360
-    const rad = angleDeg * Math.PI / 180;
-    const isMajor = i % 10 === 0;
-    const isMed = i % 5 === 0;
-    const r1 = isMajor ? innerR : (isMed ? innerR + 2 : innerR + 4);
-    g.appendChild(mkEl('line', {
-      x1: cx + r1 * Math.cos(rad), y1: cy + r1 * Math.sin(rad),
-      x2: cx + outerR * Math.cos(rad), y2: cy + outerR * Math.sin(rad),
-      stroke: isMajor ? '#ccc' : '#888',
-      'stroke-width': isMajor ? '1.5' : '0.7'
-    }));
+// Ring of knurling ticks around a cylinder (XZ plane)
+function cylTicks(cx, cy, cz, r, n, h, mat, parent) {
+  const geo = new THREE.BoxGeometry(.012, h, .025);
+  const im = new THREE.InstancedMesh(geo, mat, n);
+  im.castShadow = false;
+  const mx = new THREE.Matrix4(), rot = new THREE.Matrix4();
+  for (let i = 0; i < n; i++) {
+    const a = (i/n) * Math.PI * 2;
+    rot.makeRotationY(a);
+    mx.copy(rot);
+    mx.setPosition(cx + r*Math.cos(a), cy, cz + r*Math.sin(a));
+    im.setMatrixAt(i, mx);
   }
-  // Labels every 30°
-  const numR = 82;
-  [0, 30, 60, 90, 120, 150].forEach(v => {
-    const angleDeg = -90 + v * 2;
-    const rad = angleDeg * Math.PI / 180;
-    const t = mkEl('text', {
-      x: (cx + numR * Math.cos(rad)).toFixed(1),
-      y: (cy + numR * Math.sin(rad) + 3).toFixed(1),
-      'font-family': 'monospace', 'font-size': '6.5',
-      fill: '#ddd', 'text-anchor': 'middle',
-      transform: `rotate(${angleDeg + 90}, ${(cx + numR * Math.cos(rad)).toFixed(1)}, ${(cy + numR * Math.sin(rad)).toFixed(1)})`
-    });
-    t.textContent = v;
-    g.appendChild(t);
-  });
+  im.instanceMatrix.needsUpdate = true;
+  parent.add(im);
 }
 
-buildSPHTicks('sph-ticks-L', 195, 355);
-buildSPHTicks('sph-ticks-R', 545, 355);
-buildAxisTicks('cax-ticks-L', 195, 355);
-buildAxisTicks('cax-ticks-R', 545, 355);
-
-// ══════════════════════════════════════════
-// DIAL ROTATION STATE
-// ══════════════════════════════════════════
-const DIAL_CONFIG = {
-  'sph-ring-L':  { cx:195, cy:355, totalAngle:0, type:'sph', side:'L' },
-  'sph-ring-R':  { cx:545, cy:355, totalAngle:0, type:'sph', side:'R' },
-  'cax-ring-L':  { cx:195, cy:355, totalAngle:0, type:'axis', side:'L' },
-  'cax-ring-R':  { cx:545, cy:355, totalAngle:0, type:'axis', side:'R' },
-  'cyl-knob-L':  { cx:195, cy:490, totalAngle:0, type:'cyl', side:'L' },
-  'cyl-knob-R':  { cx:545, cy:490, totalAngle:0, type:'cyl', side:'R' },
-  'aux-L':       { cx:294, cy:292, totalAngle:0, type:'aux', side:'L' },
-  'aux-R':       { cx:446, cy:292, totalAngle:0, type:'aux', side:'R' },
+// ── PART INFO ─────────────────────────────────────
+const INFO = {
+  sphRing:  { t:'Spherical Disk — חוגת ה-SPH', d:'הטבעת הגדולה החיצונית. מכילה עדשות ספיריות בטווח −20 עד +20 דיופטר בצעדים של 0.25Δ לתיקון קוצר ראייה ורוחק ראייה.', c:'#fb923c' },
+  axisRing: { t:'Cylinder Axis Dial — חוגת הציר', d:'הטבעת הכסופה הפנימית. מסמנת את ציר הצילינדר לתיקון אסטיגמציה, בטווח 0°–180°. הקו האדום הוא הסמן הקבוע.', c:'#fb7185' },
+  aperture: { t:'Viewing Aperture — פתח הראייה', d:'הפתח האפל שדרכו המטופל מסתכל בלוח הבדיקה. בתוכו מסתובבות כל העדשות השונות. קוטר ~28 מ"מ.', c:'#06b6d4' },
+  housing:  { t:'Main Housing — גוף המכשיר', d:'גוף האלומיניום הראשי המחזיק את כל מנגנוני העדשות. מדויק עד מיקרון אחד כדי לאפשר מדידות אופטיות אמינות.', c:'#94a3b8' },
+  cylKnob:  { t:'Cylinder Diopter Knob — כפתור צילינדר', d:'כפתור הצילינדר התחתון. מכוון עוצמת הצילינדר לתיקון אסטיגמציה, 0 עד −6 דיופטר בצעדים של 0.25Δ.', c:'#f87171' },
+  auxDial:  { t:'Auxiliary Lens Dial — חוגת עדשות עזר', d:'חוגה סיבובית המכילה עדשות עזר: JCC לכיוון ציר, פינהול, פריזמות, פולארויד, ועדשות מיוחדות לבדיקות ייעודיות.', c:'#a78bfa' },
+  pdKnob:   { t:'PD Knob — כפתור מרחק אישונים', d:'מכוון את המרחק בין העדשות לפי ה-PD (Pupil Distance) של המטופל. טווח טיפוסי: 54–74 מ"מ.', c:'#818cf8' },
+  bridge:   { t:'Bridge Bar — זרוע הגשר', d:'הקשר האופקי המחבר בין שתי מערכות הראייה. מכיל כפתורי PD, בועת הפילוס ומנגנוני הכיוון האופקי.', c:'#60a5fa' },
+  bubble:   { t:'Horizontal Bubble — בועת פילוס', d:'חיוני: הפורופטר חייב מפולס לחלוטין. הטיה של 2–3° גורמת לשגיאות חמורות במדידת ציר אסטיגמציה.', c:'#10b981' },
+  topMount: { t:'Mounting Bracket — זרוע הנשיאה', d:'מחבר את הפורופטר לכיסא הבדיקה. כפתורי הנעילה מאפשרים קיבוע מדויק בגובה ובזווית.', c:'#e2e8f0' },
+  prism:    { t:'Prism Knob — כפתור פריזמה (Δ)', d:'פריזמות משמשות לאבחון וטיפול בהטיות עיניים, פוריה וסטרביזמוס. מחושב בפריזם-דיופטר (Δ).', c:'#6366f1' },
+  auxKnob:  { t:'Aux Lens Knob — כפתור עדשות עזר', d:'בוחר עדשת עזר: OC (כיסוי עין), PL (שקוף), PH (פינהול), R (פריזמה), וכו\'.', c:'#c084fc' },
 };
 
-let activeDial = null;
-let lastMouseAngle = 0;
+// ── BUILD EYE UNIT ────────────────────────────────
+function buildEye(side, g) {
+  const sx = side === 'L' ? -0.92 : 0.92;
+  const out = side === 'L' ? -1 : 1; // outward direction
 
-const svg = document.getElementById('phoropter-svg');
+  // Housing cylinder (axis along Z)
+  const h = mesh(new THREE.CylinderGeometry(.88,.88,.78,80), M.housing, g,
+    [sx, 0, -.04], [Math.PI/2,0,0]);
+  h.userData.part = 'housing';
 
-function getSVGAngle(e, cx, cy) {
-  const pt = svg.createSVGPoint();
-  pt.x = e.clientX; pt.y = e.clientY;
-  const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
-  return Math.atan2(svgP.y - cy, svgP.x - cx) * 180 / Math.PI;
+  // Housing back cap
+  mesh(new THREE.CircleGeometry(.88,64), M.dark, g, [sx,0,-.43]);
+
+  // Back rim ring
+  mesh(new THREE.TorusGeometry(.88,.03,12,64), M.dark, g, [sx,0,-.44]);
+
+  // ── SPH OUTER RING ──
+  const sph = mesh(new THREE.TorusGeometry(1.07,.145,30,120), M.silver, g, [sx,0,.24]);
+  sph.userData.part = 'sphRing';
+
+  const sphFace = mesh(new THREE.RingGeometry(.925,1.215,120), M.silverBrt, g, [sx,0,.39]);
+  sphFace.userData.part = 'sphRing';
+
+  // SPH tick marks on front face
+  faceTicks(sx,0,.40, 1.07, 80, .048,.011,.10, M.silverDark, g);   // minor ticks
+  faceTicks(sx,0,.40, 1.07, 20, .080,.020,.12, M.dark,       g);   // major ticks
+
+  // Housing front face (covers inner part of SPH ring visually)
+  mesh(new THREE.RingGeometry(0,.925,80), M.housing, g, [sx,0,.385]);
+
+  // ── AXIS RING ──
+  const ax = mesh(new THREE.TorusGeometry(.715,.10,24,90), M.silverBrt, g, [sx,0,.35]);
+  ax.userData.part = 'axisRing';
+
+  const axFace = mesh(new THREE.RingGeometry(.615,.815,90), M.silver, g, [sx,0,.395]);
+  axFace.userData.part = 'axisRing';
+
+  faceTicks(sx,0,.40, .715, 90, .030,.007,.08, M.silverDark, g);
+
+  // Axis indicator (red) at top
+  const ind = mesh(new THREE.CylinderGeometry(.016,.016,.08,8), M.red, g, [sx,.72,.40]);
+  ind.userData.part = 'axisRing';
+  mesh(new THREE.SphereGeometry(.025,8,8), M.red, g, [sx,.72,.45]);
+
+  // Cover inner of axis ring
+  mesh(new THREE.RingGeometry(0,.615,64), M.housing, g, [sx,0,.395]);
+
+  // ── DARK INNER RING ──
+  mesh(new THREE.TorusGeometry(.575,.07,14,60), M.dark, g, [sx,0,.36]);
+  mesh(new THREE.RingGeometry(0,.575,60), M.dark, g, [sx,0,.398]);
+
+  // ── APERTURE ──
+  const ap = mesh(new THREE.CircleGeometry(.505,80), M.aperture, g, [sx,0,.41]);
+  ap.userData.part = 'aperture';
+
+  const gl = mesh(new THREE.CircleGeometry(.44,80), M.glass, g, [sx,0,.415]);
+  gl.userData.part = 'aperture';
+
+  // Lens highlight
+  const hlMat = new THREE.MeshStandardMaterial({
+    color:0x2244bb, emissive:new THREE.Color(0x112266),
+    emissiveIntensity:.18, transparent:true, opacity:.22
+  });
+  const hl = new THREE.Mesh(new THREE.CircleGeometry(.22,32), hlMat);
+  hl.scale.set(1.7,1,1); hl.position.set(sx - out*.08, .10, .425);
+  g.add(hl);
+
+  // ── AUX LENS DIAL (swing-arm) ──
+  const asx = sx + out * .60, asy = .30;
+  cylinderBetween(
+    new THREE.Vector3(sx + out*.20, .58, .38),
+    new THREE.Vector3(asx, asy, .38), .024, M.silver, g
+  );
+  const auxD = mesh(new THREE.TorusGeometry(.255,.065,18,60), M.silver, g, [asx,asy,.38]);
+  auxD.userData.part = 'auxDial';
+  mesh(new THREE.RingGeometry(0,.19,48), M.housing, g, [asx,asy,.445]);
+  mesh(new THREE.CircleGeometry(.155,48), M.aperture, g, [asx,asy,.45]);
+  // Aux lever
+  mesh(new THREE.CylinderGeometry(.035,.026,.14,12), M.silver, g, [asx - out*.02,.56,.43]);
+  mesh(new THREE.SphereGeometry(.048,12,12), M.silverBrt, g, [asx - out*.02,.64,.43]);
+
+  // ── AUX SELECTION KNOB (outer side) ──
+  const auxK = mesh(new THREE.CylinderGeometry(.13,.115,.15,28), M.silver, g,
+    [sx + out*1.13, .48,.03], [0,0,Math.PI/2]);
+  auxK.userData.part = 'auxKnob';
+  mesh(new THREE.CylinderGeometry(.09,.09,.022,22), M.silverBrt, g,
+    [sx + out*1.215, .48,.03], [0,0,Math.PI/2]);
+  cylTicks(sx + out*1.13, .48, .03, .13, 20, .15, M.silverDark, g);
+
+  // ── PRISM KNOB (inner, on front face) ──
+  const pr = mesh(new THREE.CylinderGeometry(.11,.095,.10,20), M.silver, g,
+    [sx - out*.54, .00,.44], [Math.PI/2,0,0]);
+  pr.userData.part = 'prism';
+
+  // ── SPH DISPLAY WINDOW ──
+  mesh(new THREE.BoxGeometry(.24,.13,.04), M.white, g, [sx + out*1.12, -.03,.18]);
+
+  // ── CYL DIOPTER KNOB (bottom) ──
+  const ck = mesh(new THREE.CylinderGeometry(.175,.158,.24,36), M.silver, g, [sx,-1.08,.22]);
+  ck.userData.part = 'cylKnob';
+  cylTicks(sx, -1.08, .22, .175, 28, .24, M.silverDark, g);
+  mesh(new THREE.CylinderGeometry(.115,.115,.022,24), M.silverBrt, g, [sx,-.96,.22]);
+  // Neck
+  mesh(new THREE.CylinderGeometry(.08,.08,.18,16), M.housing, g, [sx,-.95,.22]);
+
+  // ── AXIS DISPLAY WINDOW ──
+  mesh(new THREE.BoxGeometry(.24,.11,.034), M.white, g, [sx + out*.50,-1.00,.30]);
 }
 
-// Snap helpers
-function snapTo(v, step) { return Math.round(v / step) * step; }
+// ── BUILD BRIDGE ──────────────────────────────────
+function buildBridge(g) {
+  // Main bar
+  const br = mesh(new THREE.BoxGeometry(3.42,.42,.30), M.housing, g, [0,1.38,0]);
+  br.userData.part = 'bridge';
+  // Highlight strips
+  mesh(new THREE.BoxGeometry(3.40,.055,.022), M.silver, g, [0,1.57,.16]);
+  mesh(new THREE.BoxGeometry(3.40,.055,.022), M.silver, g, [0,1.19,.16]);
+  // End caps
+  [-1.70,1.70].forEach(x => mesh(new THREE.BoxGeometry(.055,.42,.022), M.silver, g, [x,1.38,.16]));
 
-function fmtDiopter(v) {
-  const sign = v >= 0 ? '+' : '−';
-  return sign + Math.abs(v).toFixed(2);
-}
-
-function fmtAxis(v) {
-  return String(Math.round(v) % 180).padStart(3,'0') + '°';
-}
-
-function updateDialValue(id, cfg) {
-  const ang = cfg.totalAngle;
-
-  if (cfg.type === 'sph') {
-    // 360° = 20D  →  18°/D  →  4.5°/0.25D
-    const raw = snapTo(-ang / 18, 0.25);
-    const val = Math.max(-20, Math.min(20, raw));
-    const s = cfg.side;
-    document.getElementById(`sph-disp-${s}`).textContent = fmtDiopter(val);
-    document.getElementById(`sph-disp-${s}`).setAttribute('fill', val < 0 ? '#cc0000' : '#111');
-    document.getElementById(`rx-sph-${s}`).textContent = fmtDiopter(val);
-
-  } else if (cfg.type === 'axis') {
-    // 2° rotation = 1° axis change (ring covers full 180° over 360° rotation)
-    let axis = ((-ang / 2) % 180 + 180) % 180;
-    axis = snapTo(axis, 1);
-    const s = cfg.side;
-    document.getElementById(`cax-disp-${s}`).textContent = fmtAxis(axis);
-    document.getElementById(`rx-ax-${s}`).textContent = fmtAxis(axis);
-
-  } else if (cfg.type === 'cyl') {
-    // 360° = 6D  →  60°/D  →  15°/0.25D
-    const raw = snapTo(-ang / 60, 0.25);
-    const val = Math.max(-6, Math.min(0, raw));
-    const s = cfg.side;
-    document.getElementById(`cyl-disp-${s}`).textContent = '−' + Math.abs(val).toFixed(2);
-    document.getElementById(`rx-cyl-${s}`).textContent = '−' + Math.abs(val).toFixed(2);
-
-  } else if (cfg.type === 'aux') {
-    // Just rotate the body visually (snap to 30° positions = 12 positions)
-    const snapped = snapTo(cfg.totalAngle, 30);
-    const bodyId = cfg.side === 'L' ? 'aux-L-body' : 'aux-R-body';
-    document.getElementById(bodyId).setAttribute('transform',
-      `rotate(${snapped}, ${cfg.cx}, ${cfg.cy})`);
-    return; // no display update
-  }
-
-  // Apply CSS transform to SVG group
-  document.getElementById(id).setAttribute('transform',
-    `rotate(${cfg.totalAngle}, ${cfg.cx}, ${cfg.cy})`);
-}
-
-// Attach pointerdown to all rotatable dials
-document.querySelectorAll('[data-rotdial]').forEach(el => {
-  el.addEventListener('pointerdown', e => {
-    e.stopPropagation();
-    const id = el.dataset.rotdial;
-    activeDial = id;
-    const cfg = DIAL_CONFIG[id];
-    lastMouseAngle = getSVGAngle(e, cfg.cx, cfg.cy);
-    el.setPointerCapture(e.pointerId);
-    document.getElementById('scene').classList.add('dial-active');
-    e.preventDefault();
+  // PD knobs (top)
+  [-0.58,0.58].forEach(x => {
+    const pk = mesh(new THREE.CylinderGeometry(.10,.090,.22,26), M.silver, g, [x,1.62,.05]);
+    pk.userData.part = 'pdKnob';
+    mesh(new THREE.CylinderGeometry(.075,.075,.022,22), M.silverBrt, g, [x,1.74,.05]);
+    cylTicks(x,1.62,.05,.10,16,.22,M.silverDark,g);
   });
 
-  el.addEventListener('pointermove', e => {
-    if (activeDial !== el.dataset.rotdial) return;
-    const id = el.dataset.rotdial;
-    const cfg = DIAL_CONFIG[id];
-    const newAngle = getSVGAngle(e, cfg.cx, cfg.cy);
-    let delta = newAngle - lastMouseAngle;
-    if (delta > 180) delta -= 360;
-    if (delta < -180) delta += 360;
-    cfg.totalAngle += delta;
-    lastMouseAngle = newAngle;
-    updateDialValue(id, cfg);
+  // PD display windows
+  [-0.20,0.20].forEach(x => mesh(new THREE.BoxGeometry(.24,.11,.022), M.white, g, [x,1.38,.16]));
+
+  // Horizontal adjusting knobs
+  [-1.63,1.63].forEach(x => {
+    mesh(new THREE.CylinderGeometry(.115,.10,.12,24), M.silver, g, [x,1.38,.06]);
+    cylTicks(x,1.38,.06,.116,12,.12,M.silverDark,g);
   });
 
-  el.addEventListener('pointerup', () => {
-    activeDial = null;
-    document.getElementById('scene').classList.remove('dial-active');
-  });
-});
+  // Bubble level
+  const bb = mesh(new THREE.BoxGeometry(.34,.13,.05),
+    new THREE.MeshStandardMaterial({color:0x091a09,roughness:.5,metalness:.1}),
+    g, [.60,1.38,.165]);
+  bb.userData.part = 'bubble';
+  mesh(new THREE.BoxGeometry(.30,.09,.018),
+    new THREE.MeshStandardMaterial({color:0x00cc44,emissive:new THREE.Color(0x004411),roughness:.2,transparent:true,opacity:.85}),
+    g, [.60,1.38,.188]);
+  mesh(new THREE.SphereGeometry(.028,12,12), M.green, g, [.60,1.38,.21]);
 
-// ══════════════════════════════════════════
-// TOOLTIP
-// ══════════════════════════════════════════
+  // Locking screw (left)
+  mesh(new THREE.BoxGeometry(.19,.32,.22), M.silver, g, [-1.85,1.38,0]);
+  mesh(new THREE.CylinderGeometry(.08,.07,.10,16), M.silver, g, [-1.97,1.38,0],[0,0,Math.PI/2]);
+}
+
+// ── BUILD TOP MOUNT ───────────────────────────────
+function buildTop(g) {
+  // Vertical rod
+  mesh(new THREE.CylinderGeometry(.092,.092,.92,18), M.silver, g, [0,2.12,.0]);
+  mesh(new THREE.BoxGeometry(.04,.90,.04), M.dark, g, [0,2.12,.09]);
+
+  // Bracket
+  const bk = mesh(new THREE.BoxGeometry(.92,.32,.30), M.silver, g, [0,2.70,.0]);
+  bk.userData.part = 'topMount';
+  // Bracket detail
+  mesh(new THREE.BoxGeometry(.90,.055,.022), M.silverBrt, g, [0,2.845,.16]);
+
+  // Two top locking knobs
+  [-0.28,0.28].forEach(x => {
+    mesh(new THREE.CylinderGeometry(.092,.092,.18,22), M.silver, g, [x,2.88,.0]);
+    mesh(new THREE.CylinderGeometry(.07,.07,.022,18), M.silverBrt, g, [x,2.98,.0]);
+    cylTicks(x,2.88,.0,.092,10,.18,M.silverDark,g);
+  });
+
+  // Right fixing knob
+  mesh(new THREE.CylinderGeometry(.10,.09,.10,20), M.silver, g, [.54,2.70,.0],[0,0,Math.PI/2]);
+  mesh(new THREE.CylinderGeometry(.07,.07,.022,16), M.silverBrt, g, [.605,2.70,.0],[0,0,Math.PI/2]);
+
+  // Insertion port
+  mesh(new THREE.BoxGeometry(.54,.17,.24),
+    new THREE.MeshStandardMaterial({color:0x1a1a1a,metalness:.5,roughness:.4}),
+    g, [0,2.44,.0]);
+}
+
+// ── BUILD CONNECTORS ──────────────────────────────
+function buildConnectors(g) {
+  // Angled arms from bridge to eye housings
+  [[-0.92,-1],[ 0.92, 1]].forEach(([x, side]) => {
+    // Main curved connector
+    cylinderBetween(
+      new THREE.Vector3(x, .88, .05),
+      new THREE.Vector3(x * .82, 1.17, .05),
+      .095, M.silverMid, g
+    );
+    // Junction sphere at bridge
+    mesh(new THREE.SphereGeometry(.118,18,18), M.silver, g, [x*.82, 1.17,.05]);
+    // Junction sphere at housing
+    mesh(new THREE.SphereGeometry(.118,18,18), M.silver, g, [x, .88, .05]);
+    // Short vertical stem into bridge bottom
+    cylinderBetween(
+      new THREE.Vector3(x*.82, 1.17, .05),
+      new THREE.Vector3(x*.82, 1.38-.21, .05),
+      .09, M.silverMid, g
+    );
+  });
+}
+
+// ── BUILD FOREHEAD REST ───────────────────────────
+function buildForehead(g) {
+  mesh(new THREE.BoxGeometry(.60,.10,.06), M.silver, g, [0,-1.32,.28]);
+  mesh(new THREE.CylinderGeometry(.088,.077,.13,18), M.silver, g, [0,-1.40,.28]);
+  mesh(new THREE.CylinderGeometry(.065,.065,.022,16), M.silverBrt, g, [0,-1.47,.28]);
+}
+
+// ── GROUND ────────────────────────────────────────
+const ground = mesh(
+  new THREE.PlaneGeometry(30,30),
+  new THREE.MeshStandardMaterial({color:0x080e18,roughness:1,metalness:0}),
+  scene, [0,-2.8,0], [-Math.PI/2,0,0]
+);
+ground.receiveShadow = true;
+
+// ── ASSEMBLE ──────────────────────────────────────
+const root = new THREE.Group();
+scene.add(root);
+
+buildEye('L', root);
+buildEye('R', root);
+buildBridge(root);
+buildTop(root);
+buildConnectors(root);
+buildForehead(root);
+
+// Collect interactive meshes
+const hitMeshes = [];
+root.traverse(o => { if (o.isMesh && o.userData.part) hitMeshes.push(o); });
+
+// ── TOOLTIP ───────────────────────────────────────
+const ray = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
 const tip = document.getElementById('tip');
-const tipTitle = document.getElementById('tip-title');
-const tipDesc = document.getElementById('tip-desc');
-const tipRotate = document.getElementById('tip-rotate');
-let tipTimer;
+const tTitle = document.getElementById('tTitle');
+const tDesc = document.getElementById('tDesc');
+let tipTimer, lastPart = null;
 
-document.querySelectorAll('.hs').forEach(el => {
-  el.addEventListener('mouseenter', () => {
-    if (activeDial) return;
-    const p = PARTS[el.dataset.part];
-    if (!p) return;
-    el.querySelectorAll('.hr').forEach(r => r.setAttribute('opacity', '0.9'));
-    tipTitle.textContent = p.title;
-    tipDesc.textContent = p.desc;
-    tip.style.borderLeftColor = p.color;
-    tipRotate.style.display = p.rotatable ? 'block' : 'none';
-    tip.style.opacity = '1';
-    clearTimeout(tipTimer);
-  });
-  el.addEventListener('mouseleave', () => {
-    el.querySelectorAll('.hr').forEach(r => r.setAttribute('opacity', '0'));
-    tipTimer = setTimeout(() => { tip.style.opacity = '0'; }, 180);
-  });
+addEventListener('mousemove', e => {
+  mouse.x = (e.clientX / innerWidth) * 2 - 1;
+  mouse.y = -(e.clientY / innerHeight) * 2 + 1;
+
+  let lx = e.clientX + 22, ly = e.clientY + 16;
+  if (lx + 275 > innerWidth) lx = e.clientX - 280;
+  if (ly + 155 > innerHeight) ly = e.clientY - 140;
+  tip.style.left = lx+'px'; tip.style.top = ly+'px';
+
+  ray.setFromCamera(mouse, camera);
+  const hits = ray.intersectObjects(hitMeshes);
+  if (hits.length) {
+    const p = hits[0].object.userData.part;
+    if (p && INFO[p]) {
+      tTitle.textContent = INFO[p].t;
+      tDesc.textContent = INFO[p].d;
+      tip.style.borderLeftColor = INFO[p].c;
+      tip.style.opacity = '1';
+      document.body.style.cursor = 'help';
+      clearTimeout(tipTimer); lastPart = p; return;
+    }
+  }
+  if (lastPart) { tipTimer = setTimeout(()=>{ tip.style.opacity='0'; }, 200); lastPart=null; }
+  document.body.style.cursor = 'default';
 });
 
-document.addEventListener('mousemove', e => {
-  let x = e.clientX + 22, y = e.clientY + 18;
-  if (x + 300 > window.innerWidth) x = e.clientX - 305;
-  if (y + 220 > window.innerHeight) y = e.clientY - 175;
-  tip.style.left = x + 'px';
-  tip.style.top = y + 'px';
-});
-
-// ══════════════════════════════════════════
-// 3D SCENE ROTATION (drag background)
-// ══════════════════════════════════════════
-const scene = document.getElementById('scene');
-const wrap = document.getElementById('wrap');
-let rotX = 0, rotY = 0, dragging3D = false, sx = 0, sy = 0;
-
-function applyTransform(animate) {
-  wrap.style.transition = animate ? 'transform 0.4s cubic-bezier(.25,.8,.25,1)' : 'none';
-  wrap.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`;
-  if (animate) setTimeout(() => wrap.style.transition = 'none', 420);
+// ── CAMERA PRESETS ────────────────────────────────
+function flyTo(px, py, pz, tx=0, ty=.1, tz=0, ms=900) {
+  const sp = camera.position.clone(), st = controls.target.clone();
+  const ep = new THREE.Vector3(px,py,pz), et = new THREE.Vector3(tx,ty,tz);
+  const t0 = performance.now();
+  (function step(now) {
+    const raw = Math.min((now-t0)/ms, 1);
+    const t = raw<.5 ? 2*raw*raw : -1+(4-2*raw)*raw;
+    camera.position.lerpVectors(sp, ep, t);
+    controls.target.lerpVectors(st, et, t);
+    controls.update();
+    if (raw < 1) requestAnimationFrame(step);
+  })(t0);
 }
 
-scene.addEventListener('pointerdown', e => {
-  if (e.target.closest('[data-rotdial]')) return;
-  dragging3D = true;
-  sx = e.clientX - rotY;
-  sy = e.clientY + rotX;
-  scene.setPointerCapture(e.pointerId);
+document.getElementById('bFront').onclick = () => flyTo(0,.3,7.0);
+document.getElementById('bSide').onclick  = () => flyTo(7.0,.2,0);
+document.getElementById('bTop').onclick   = () => flyTo(0,7.5,.8, 0,0,0);
+document.getElementById('bIso').onclick   = () => flyTo(3.0,1.8,5.5);
+
+// Auto-rotate toggle
+let autoRot = false;
+const bAuto = document.getElementById('bAuto');
+bAuto.onclick = () => { autoRot = !autoRot; bAuto.classList.toggle('active', autoRot); };
+controls.addEventListener('start', () => { if(autoRot){ autoRot=false; bAuto.classList.remove('active'); } });
+
+// ── RESIZE ────────────────────────────────────────
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
 });
 
-scene.addEventListener('pointermove', e => {
-  if (!dragging3D) return;
-  rotY = Math.max(-55, Math.min(55, e.clientX - sx));
-  rotX = Math.max(-35, Math.min(35, sy - e.clientY));
-  applyTransform(false);
-});
+// ── ANIMATE ───────────────────────────────────────
+function animate() {
+  requestAnimationFrame(animate);
+  if (autoRot) root.rotation.y += .005;
+  controls.update();
+  renderer.render(scene, camera);
+}
+animate();
 
-scene.addEventListener('pointerup', () => { dragging3D = false; });
-
-document.getElementById('reset-btn').addEventListener('click', e => {
-  e.stopPropagation();
-  rotX = 0; rotY = 0;
-  applyTransform(true);
-});
-
-document.getElementById('reset-rx-btn').addEventListener('click', e => {
-  e.stopPropagation();
-  Object.values(DIAL_CONFIG).forEach(d => d.totalAngle = 0);
-  Object.keys(DIAL_CONFIG).forEach(id => {
-    const cfg = DIAL_CONFIG[id];
-    if (cfg.type === 'aux') {
-      document.getElementById(id === 'aux-L' ? 'aux-L-body' : 'aux-R-body').removeAttribute('transform');
-    } else {
-      document.getElementById(id).removeAttribute('transform');
-    }
-    updateDialValue(id, cfg);
-  });
-  // Reset all displays to 0
-  ['L','R'].forEach(s => {
-    document.getElementById(`sph-disp-${s}`).textContent = '+0.00';
-    document.getElementById(`sph-disp-${s}`).setAttribute('fill', '#111');
-    document.getElementById(`cyl-disp-${s}`).textContent = '−0.00';
-    document.getElementById(`cax-disp-${s}`).textContent = '000°';
-    document.getElementById(`rx-sph-${s}`).textContent = '+0.00';
-    document.getElementById(`rx-cyl-${s}`).textContent = '−0.00';
-    document.getElementById(`rx-ax-${s}`).textContent = '000°';
-  });
-});
+// Hide loader
+setTimeout(() => {
+  const l = document.getElementById('loading');
+  l.style.opacity = '0';
+  setTimeout(() => l.remove(), 650);
+}, 300);
 </script>
 </body>
 </html>
