@@ -95,7 +95,7 @@ const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 
 // ── LIGHTS ────────────────────────────────────────
-scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+scene.add(new THREE.AmbientLight(0xffffff, 1.1));
 
 const sun = new THREE.DirectionalLight(0xfff5e0, 2.8);
 sun.position.set(5, 8, 6);
@@ -126,10 +126,10 @@ controls.update();
 // ── MATERIALS ─────────────────────────────────────
 // Housing = matte cream/off-white plastic, knobs/rings = bright chrome
 const M = {
-  silver:      new THREE.MeshStandardMaterial({ color:0xe8e8ea, metalness:.97, roughness:.06 }),
-  silverBrt:   new THREE.MeshStandardMaterial({ color:0xfafafa, metalness:.95, roughness:.03 }),
-  silverMid:   new THREE.MeshStandardMaterial({ color:0xd0d0d4, metalness:.95, roughness:.10 }),
-  silverDark:  new THREE.MeshStandardMaterial({ color:0xaeaeb4, metalness:.92, roughness:.16 }),
+  silver:      new THREE.MeshStandardMaterial({ color:0xe8e8ea, metalness:.85, roughness:.20, envMapIntensity:2.2 }),
+  silverBrt:   new THREE.MeshStandardMaterial({ color:0xfafafa, metalness:.80, roughness:.14, envMapIntensity:2.2 }),
+  silverMid:   new THREE.MeshStandardMaterial({ color:0xd0d0d4, metalness:.82, roughness:.24, envMapIntensity:2.0 }),
+  silverDark:  new THREE.MeshStandardMaterial({ color:0xaeaeb4, metalness:.78, roughness:.30, envMapIntensity:2.0 }),
   housing:     new THREE.MeshStandardMaterial({ color:0xe9e4d8, metalness:.03, roughness:.55 }),
   dark:        new THREE.MeshStandardMaterial({ color:0x1c1c1c, metalness:.45, roughness:.55 }),
   aperture:    new THREE.MeshStandardMaterial({ color:0x020508, metalness:.05, roughness:.02 }),
