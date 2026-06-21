@@ -222,12 +222,16 @@ function buildEye(side, g) {
   // Back rim ring
   mesh(new THREE.TorusGeometry(.88,.03,12,64), M.dark, g, [sx,0,-.44]);
 
-  // ── SPH OUTER RING ──
-  const sph = mesh(new THREE.TorusGeometry(1.07,.145,30,120), M.silver, g, [sx,0,.24]);
+  // ── SPH OUTER RING (cream plastic disc with chrome bezel) ──
+  const sph = mesh(new THREE.TorusGeometry(1.07,.145,30,120), M.housing, g, [sx,0,.24]);
   sph.userData.part = 'sphRing';
 
-  const sphFace = mesh(new THREE.RingGeometry(.925,1.215,120), M.silverBrt, g, [sx,0,.39]);
+  const sphFace = mesh(new THREE.RingGeometry(.925,1.215,120), M.housing, g, [sx,0,.39]);
   sphFace.userData.part = 'sphRing';
+
+  // thin chrome bezel rims
+  mesh(new THREE.TorusGeometry(1.215,.012,10,120), M.silverBrt, g, [sx,0,.395]);
+  mesh(new THREE.TorusGeometry(.925,.012,10,120), M.silverBrt, g, [sx,0,.395]);
 
   // SPH tick marks on front face
   faceTicks(sx,0,.40, 1.07, 80, .048,.011,.10, M.silverDark, g);   // minor ticks
@@ -236,11 +240,11 @@ function buildEye(side, g) {
   // Housing front face (covers inner part of SPH ring visually)
   mesh(new THREE.RingGeometry(0,.925,80), M.housing, g, [sx,0,.385]);
 
-  // ── AXIS RING ──
+  // ── AXIS RING (chrome bezel) ──
   const ax = mesh(new THREE.TorusGeometry(.715,.10,24,90), M.silverBrt, g, [sx,0,.35]);
   ax.userData.part = 'axisRing';
 
-  const axFace = mesh(new THREE.RingGeometry(.615,.815,90), M.silver, g, [sx,0,.395]);
+  const axFace = mesh(new THREE.RingGeometry(.615,.815,90), M.silverMid, g, [sx,0,.395]);
   axFace.userData.part = 'axisRing';
 
   faceTicks(sx,0,.40, .715, 90, .030,.007,.08, M.silverDark, g);
