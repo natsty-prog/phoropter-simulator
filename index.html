@@ -124,17 +124,18 @@ controls.target.set(0, 0.1, 0);
 controls.update();
 
 // ── MATERIALS ─────────────────────────────────────
+// Housing = matte cream/off-white plastic, knobs/rings = bright chrome
 const M = {
-  silver:      new THREE.MeshStandardMaterial({ color:0xd6d6d6, metalness:.94, roughness:.10 }),
-  silverBrt:   new THREE.MeshStandardMaterial({ color:0xeeeeee, metalness:.90, roughness:.06 }),
-  silverMid:   new THREE.MeshStandardMaterial({ color:0xb0b0b0, metalness:.88, roughness:.18 }),
-  silverDark:  new THREE.MeshStandardMaterial({ color:0x909090, metalness:.85, roughness:.24 }),
-  housing:     new THREE.MeshStandardMaterial({ color:0x888888, metalness:.82, roughness:.22 }),
+  silver:      new THREE.MeshStandardMaterial({ color:0xe8e8ea, metalness:.97, roughness:.06 }),
+  silverBrt:   new THREE.MeshStandardMaterial({ color:0xfafafa, metalness:.95, roughness:.03 }),
+  silverMid:   new THREE.MeshStandardMaterial({ color:0xd0d0d4, metalness:.95, roughness:.10 }),
+  silverDark:  new THREE.MeshStandardMaterial({ color:0xaeaeb4, metalness:.92, roughness:.16 }),
+  housing:     new THREE.MeshStandardMaterial({ color:0xe9e4d8, metalness:.03, roughness:.55 }),
   dark:        new THREE.MeshStandardMaterial({ color:0x1c1c1c, metalness:.45, roughness:.55 }),
   aperture:    new THREE.MeshStandardMaterial({ color:0x020508, metalness:.05, roughness:.02 }),
   glass:       new THREE.MeshStandardMaterial({ color:0x081830, metalness:.08, roughness:.0, transparent:true, opacity:.55 }),
   green:       new THREE.MeshStandardMaterial({ color:0x22cc55, emissive:new THREE.Color(0x0a4420), roughness:.25 }),
-  white:       new THREE.MeshStandardMaterial({ color:0xf0f0f0, metalness:.0,  roughness:.6  }),
+  white:       new THREE.MeshStandardMaterial({ color:0xf5f3ee, metalness:.0,  roughness:.6  }),
   red:         new THREE.MeshStandardMaterial({ color:0xff2020, emissive:new THREE.Color(0x660000), roughness:.3 }),
 };
 
